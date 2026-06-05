@@ -1,12 +1,17 @@
 ---
 name: ad-creative-monitor
 description: "Track creative performance over time and detect fatigue before it kills ROAS. Monitors CTR decay, frequency creep, and CPC inflation at the ad level."
+version: 1.0.0-hermes.1
+author: TheMattBerman + Hermes adaptation
+license: MIT
 metadata:
-  openclaw:
+  hermes:
     emoji: "😴"
-    user-invocable: true
+    tags: ["meta-ads", "creative-fatigue", "paid-media", "reporting"]
+    homepage: https://github.com/tiagotalbuquerque/hermes-meta-ads-kit
+    user_invocable: true
     requires:
-      tools: ["social"]
+      commands: ["social"]
       env: []
 ---
 

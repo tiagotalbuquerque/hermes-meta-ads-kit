@@ -1,21 +1,25 @@
 ---
 name: ad-copy-generator
 description: "Generate high-converting Meta ad copy matched to specific image creatives. Analyzes visuals, writes copy that reinforces the image, cross-references account performance data, and outputs asset_feed_spec-ready variants."
+version: 1.0.0-hermes.1
+author: TheMattBerman + Hermes adaptation
+license: MIT
 metadata:
-  openclaw:
+  hermes:
     emoji: "✍️"
-    user-invocable: true
-    homepage: https://github.com/TheMattBerman/meta-ads-kit
+    tags: ["meta-ads", "copywriting", "creative", "asset-feed-spec"]
+    homepage: https://github.com/tiagotalbuquerque/hermes-meta-ads-kit
+    user_invocable: true
     requires:
-      env:
-        - FACEBOOK_ACCESS_TOKEN
+      commands: ["curl", "jq"]
+      env: ["FACEBOOK_ACCESS_TOKEN"]
 ---
 
 # Ad Copy Generator
 
 Write Meta ad copy that's matched to the actual image creative — not generic copy pasted across every ad. Each image gets copy that reinforces its specific message, written in the brand's voice, informed by what's already working in the account.
 
-Read `workspace/brand/` per the _vibe-system protocol if available.
+Read `workspace/brand/` for project-local brand context if available.
 
 ---
 
@@ -79,14 +83,14 @@ Show the user what you found: "Your top 3 ads all open with a specific number an
 
 ### Step 2: Load Brand Context
 
-Read the client's CLAUDE.md, brand profile, or ask inline:
+Read the client's `AGENTS.md`, `HERMES.md`, brand profile, or ask inline:
 
 | Need | Where | Fallback |
 |------|-------|----------|
-| ICP | `audience.md` or CLAUDE.md | Ask: "Who's this for?" |
+| ICP | `audience.md`, `AGENTS.md`, or `HERMES.md` | Ask: "Who's this for?" |
 | Voice | `voice-profile.md` | Ask: "Any words to avoid? Tone preference?" |
 | Pain points | `audience.md` | Extract from top-performing copy |
-| Key stats | Brand brief / CLAUDE.md | Ask: "What proof points can I use?" |
+| Key stats | Brand brief / AGENTS.md / HERMES.md | Ask: "What proof points can I use?" |
 | Forbidden words | `voice-profile.md` | Default ban list (see below) |
 
 **Default forbidden words** (always banned unless brand explicitly uses them):

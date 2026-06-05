@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Meta Ads Copilot — Report Runner
+# Hermes Meta Ads Kit — Report Runner
 #
 # Usage:
 #   ./run.sh daily-check           # The 5 Daily Questions
@@ -50,7 +50,7 @@ case "$MODE" in
     bash "$SCRIPT_DIR/skills/budget-optimizer/scripts/budget-optimizer.sh" pacing "$@"
     ;;
   *)
-    echo "Meta Ads Copilot"
+    echo "Hermes Meta Ads Kit"
     echo ""
     echo "Usage: ./run.sh <command> [options]"
     echo ""

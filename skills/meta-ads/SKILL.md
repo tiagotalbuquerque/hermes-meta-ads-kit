@@ -1,12 +1,17 @@
 ---
 name: meta-ads
 description: "Meta Ads management and reporting — daily checks, campaign performance, creative fatigue, bleeders, winners. Wraps social-cli for Facebook/Instagram ads. The '5 Daily Questions' that replace Ads Manager."
+version: 1.0.0-hermes.1
+author: TheMattBerman + Hermes adaptation
+license: MIT
 metadata:
-  openclaw:
+  hermes:
     emoji: "📣"
-    user-invocable: true
+    tags: ["meta-ads", "facebook-ads", "instagram-ads", "reporting", "paid-media"]
+    homepage: https://github.com/tiagotalbuquerque/hermes-meta-ads-kit
+    user_invocable: true
     requires:
-      tools: ["social"]
+      commands: ["social"]
       env: []
 ---
 
@@ -18,9 +23,9 @@ The thesis: 90% of ad management is pattern recognition. Spend trending up or do
 
 This skill spots the patterns. You make the calls.
 
-Read `workspace/brand/` per the _vibe-system protocol
+Read `workspace/brand/` for project-local brand context if available.
 
-Follow all output formatting rules from the _vibe-system output format
+Use Hermes output style: lead with key metrics, cite the script/data source, and separate recommendations from actions requiring approval.
 
 ---
 

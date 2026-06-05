@@ -1,15 +1,18 @@
 ---
 name: ad-upload
 description: "Push ad copy and images to Meta via Graph API — no Ads Manager required. Uploads images, builds asset_feed_spec creatives, and creates or refreshes ads in existing ad sets. Downstream of ad-copy-generator."
+version: 1.0.0-hermes.1
+author: TheMattBerman + Hermes adaptation
+license: MIT
 metadata:
-  openclaw:
+  hermes:
     emoji: "🚀"
-    user-invocable: true
-    homepage: https://github.com/TheMattBerman/meta-ads-kit
+    tags: ["meta-ads", "ad-upload", "graph-api", "asset-feed-spec"]
+    homepage: https://github.com/tiagotalbuquerque/hermes-meta-ads-kit
+    user_invocable: true
     requires:
-      env:
-        - FACEBOOK_ACCESS_TOKEN
-        - META_AD_ACCOUNT
+      commands: ["curl", "jq"]
+      env: ["FACEBOOK_ACCESS_TOKEN", "META_AD_ACCOUNT"]
 ---
 
 # Ad Upload
@@ -18,7 +21,7 @@ Take the copy and images from `ad-copy-generator` and push them straight to Meta
 
 This skill handles the full upload chain: image → hash → creative (with asset_feed_spec) → ad.
 
-Read `workspace/brand/` per the _vibe-system protocol if available.
+Read `workspace/brand/` for project-local brand context if available.
 
 ---
 

@@ -1,0 +1,35 @@
+{
+  "name": "hermes-meta-ads-kit",
+  "displayName": "Hermes Meta Ads Kit",
+  "description": "Hermes Agent skill pack for Meta Ads reporting, fatigue monitoring, budget recommendations, copy generation, ad upload, and Pixel/CAPI audits.",
+  "version": "1.0.0-hermes.1",
+  "author": "Fork adapted for Hermes Agent from TheMattBerman/meta-ads-kit",
+  "homepage": "https://github.com/tiagotalbuquerque/hermes-meta-ads-kit",
+  "framework": "hermes-agent",
+  "install": "scripts/install-hermes-skills.sh",
+  "skills": [
+    "meta-ads",
+    "ad-creative-monitor",
+    "budget-optimizer",
+    "ad-copy-generator",
+    "ad-upload",
+    "pixel-capi"
+  ],
+  "requiredCommands": ["social"],
+  "optionalCommands": ["jq", "curl", "identify"],
+  "optionalEnv": [
+    "META_AD_ACCOUNT",
+    "FACEBOOK_ACCESS_TOKEN",
+    "HERMES_HOME",
+    "HERMES_SKILL_CATEGORY"
+  ],
+  "tags": [
+    "hermes-agent",
+    "meta-ads",
+    "facebook-ads",
+    "instagram-ads",
+    "marketing",
+    "paid-media",
+    "pixel-capi"
+  ]
+}

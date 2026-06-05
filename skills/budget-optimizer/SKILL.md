@@ -1,12 +1,17 @@
 ---
 name: budget-optimizer
 description: "Analyze spend efficiency across campaigns and adsets. Recommends budget shifts from underperformers to winners."
+version: 1.0.0-hermes.1
+author: TheMattBerman + Hermes adaptation
+license: MIT
 metadata:
-  openclaw:
+  hermes:
     emoji: "💰"
-    user-invocable: true
+    tags: ["meta-ads", "budget", "paid-media", "optimization"]
+    homepage: https://github.com/tiagotalbuquerque/hermes-meta-ads-kit
+    user_invocable: true
     requires:
-      tools: ["social"]
+      commands: ["social"]
       env: []
 ---
 

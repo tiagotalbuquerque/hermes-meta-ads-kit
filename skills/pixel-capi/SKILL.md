@@ -1,12 +1,17 @@
 ---
 name: pixel-capi
 description: "Meta Pixel + Conversions API (CAPI) setup, audit, testing, and EMQ optimization. Covers browser pixel installation, server-side CAPI implementation, deduplication, advanced matching, and Event Match Quality scoring across all major platforms."
+version: 1.0.0-hermes.1
+author: TheMattBerman + Hermes adaptation
+license: MIT
 metadata:
-  openclaw:
-    emoji: "🎯"
-    user-invocable: true
+  hermes:
+    emoji: "🔌"
+    tags: ["meta-pixel", "capi", "tracking", "event-match-quality"]
+    homepage: https://github.com/tiagotalbuquerque/hermes-meta-ads-kit
+    user_invocable: true
     requires:
-      tools: []
+      commands: ["curl", "jq"]
       env: []
 ---
 
