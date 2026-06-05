@@ -12,7 +12,11 @@ metadata:
     user_invocable: true
     requires:
       commands: ["curl", "jq"]
-      env: ["FACEBOOK_ACCESS_TOKEN", "META_AD_ACCOUNT"]
+      env: []
+    optional_env: ["FACEBOOK_ACCESS_TOKEN", "META_AD_ACCOUNT"]
+prerequisites:
+  commands: ["curl", "jq"]
+  environment_variables: []
 ---
 
 # Ad Upload
@@ -24,6 +28,26 @@ This skill handles the full upload chain: image → hash → creative (with asse
 Read `workspace/brand/` for project-local brand context if available.
 
 ---
+
+
+### Hermes Secret-Safety Note
+
+Some Meta Graph API examples in this skill/reference use Meta's documented `access_token` parameter. In Hermes runs, prefer bearer headers when executing commands so tokens do not appear in URLs, logs, browser history, or copied diagnostics:
+
+```bash
+curl -H "Authorization: Bearer $FACEBOOK_ACCESS_TOKEN" "https://graph.facebook.com/v22.0/me"
+```
+
+If a Meta endpoint truly requires `access_token` as a form field, pass it from an environment variable at execution time and never paste the token into the prompt, docs, or committed files.
+
+## Hermes Execution Notes
+
+This skill can mutate live Meta accounts. In Hermes, treat every non-dry-run upload/create/update as a spend- or delivery-affecting action that requires explicit user approval immediately before execution.
+
+Do not put access tokens in Graph API URLs. Prefer `curl -H "Authorization: Bearer $FACEBOOK_ACCESS_TOKEN" ...`. Always dry-run/validate payloads before a live call.
+
+---
+
 
 ## Brand Memory Integration
 

@@ -13,6 +13,11 @@ if ! command -v social &>/dev/null; then
   exit 1
 fi
 
+if ! command -v jq &>/dev/null; then
+  echo "ERROR: jq not installed. Install jq before running JSON reports." >&2
+  exit 1
+fi
+
 MODE="${1:-efficiency}"
 shift 2>/dev/null || true
 ACCOUNT="${META_AD_ACCOUNT:-}"
@@ -29,6 +34,10 @@ done
 [[ -n "$ACCOUNT" && ! "$ACCOUNT" =~ ^act_ ]] && ACCOUNT="act_${ACCOUNT}"
 ACCOUNT_ARG=""
 [[ -n "$ACCOUNT" ]] && ACCOUNT_ARG="$ACCOUNT"
+
+clean_social_output() {
+  grep -v "^[/ _|\\]" | grep -v "token gymnastics" | grep -v "Chaos Craft" || true
+}
 
 case "$MODE" in
   efficiency)
@@ -99,13 +108,13 @@ case "$MODE" in
     echo "======================"
     echo ""
     social --no-banner marketing status $ACCOUNT_ARG \
-      2>&1 | grep -v "^[/ _|\\]" | grep -v "token gymnastics" | grep -v "Chaos Craft"
+      2>&1 | clean_social_output
     echo ""
     echo "Campaign-level spend (today):"
     social --no-banner marketing insights $ACCOUNT_ARG \
       --preset today --level campaign --table \
       --fields "campaign_name,spend,impressions,clicks" \
-      2>&1 | grep -v "^[/ _|\\]" | grep -v "token gymnastics" | grep -v "Chaos Craft"
+      2>&1 | clean_social_output
     ;;
 
   *)

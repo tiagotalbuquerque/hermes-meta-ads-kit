@@ -7,7 +7,7 @@
 # If given an ad account ID (act_XXXXXX or just the number): lists all pixels, audits each
 # If given a pixel ID directly (no act_ prefix, or a long numeric ID): audits that pixel only
 #
-# Requires: META_TOKEN env var or ~/.social-cli/config.json with meta_access_token
+# Requires: META_TOKEN or FACEBOOK_ACCESS_TOKEN env var, or ~/.social-cli/config.json with meta_access_token
 
 set -euo pipefail
 
@@ -19,6 +19,10 @@ get_token() {
     echo "$META_TOKEN"
     return
   fi
+  if [[ -n "${FACEBOOK_ACCESS_TOKEN:-}" ]]; then
+    echo "$FACEBOOK_ACCESS_TOKEN"
+    return
+  fi
   local config="$HOME/.social-cli/config.json"
   if [[ -f "$config" ]]; then
     local tok
@@ -28,8 +32,8 @@ get_token() {
       return
     fi
   fi
-  echo "ERROR: META_TOKEN not set and not found in ~/.social-cli/config.json" >&2
-  echo "Set it: export META_TOKEN=your_token" >&2
+  echo "ERROR: META_TOKEN/FACEBOOK_ACCESS_TOKEN not set and not found in ~/.social-cli/config.json" >&2
+  echo "Set it: export FACEBOOK_ACCESS_TOKEN=your_token" >&2
   exit 1
 }
 

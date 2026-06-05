@@ -11,8 +11,11 @@ metadata:
     homepage: https://github.com/tiagotalbuquerque/hermes-meta-ads-kit
     user_invocable: true
     requires:
-      commands: ["curl", "jq"]
+      commands: ["curl", "jq", "sha256sum", "bc"]
       env: []
+prerequisites:
+  commands: ["curl", "jq", "sha256sum", "bc"]
+  environment_variables: []
 ---
 
 # Pixel + CAPI -- Your Server-Side Signal Stack
@@ -26,6 +29,26 @@ This skill audits, sets up, tests, and optimizes your Meta Pixel + CAPI stack. T
 **Always read `references/pixel-capi-reference.md` first.** That doc is the full knowledge base. Scripts automate the work; the reference doc explains the why.
 
 ---
+
+
+### Hermes Secret-Safety Note
+
+Some Meta Graph API examples in this skill/reference use Meta's documented `access_token` parameter. In Hermes runs, prefer bearer headers when executing commands so tokens do not appear in URLs, logs, browser history, or copied diagnostics:
+
+```bash
+curl -H "Authorization: Bearer $FACEBOOK_ACCESS_TOKEN" "https://graph.facebook.com/v22.0/me"
+```
+
+If a Meta endpoint truly requires `access_token` as a form field, pass it from an environment variable at execution time and never paste the token into the prompt, docs, or committed files.
+
+## Hermes Execution Notes
+
+When loaded by Hermes, run Pixel/CAPI helper scripts by absolute path from the installed skill directory unless you are in the repository root. The scripts accept `META_TOKEN` or `FACEBOOK_ACCESS_TOKEN` and also try `~/.social-cli/config.json`.
+
+Audits and setup guidance are read-only. Sending CAPI test events is safe when a test event code is used; sending real production events or changing site code requires explicit approval.
+
+---
+
 
 ## Brand Memory Integration
 

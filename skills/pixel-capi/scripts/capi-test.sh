@@ -8,7 +8,7 @@
 # Events appear in Events Manager > Data Sources > [Pixel] > Test Events
 # test_event_code prevents test events from affecting real data
 #
-# Requires: META_TOKEN env var or ~/.social-cli/config.json with meta_access_token
+# Requires: META_TOKEN or FACEBOOK_ACCESS_TOKEN env var, or ~/.social-cli/config.json with meta_access_token
 
 set -euo pipefail
 
@@ -19,14 +19,18 @@ get_token() {
     echo "$META_TOKEN"
     return
   fi
+  if [[ -n "${FACEBOOK_ACCESS_TOKEN:-}" ]]; then
+    echo "$FACEBOOK_ACCESS_TOKEN"
+    return
+  fi
   local config="$HOME/.social-cli/config.json"
   if [[ -f "$config" ]]; then
     local tok
     tok=$(jq -r '.meta_access_token // .access_token // empty' "$config" 2>/dev/null || true)
     [[ -n "$tok" ]] && echo "$tok" && return
   fi
-  echo "ERROR: META_TOKEN not set and not found in ~/.social-cli/config.json" >&2
-  echo "Set it: export META_TOKEN=your_token" >&2
+  echo "ERROR: META_TOKEN/FACEBOOK_ACCESS_TOKEN not set and not found in ~/.social-cli/config.json" >&2
+  echo "Set it: export FACEBOOK_ACCESS_TOKEN=your_token" >&2
   exit 1
 }
 

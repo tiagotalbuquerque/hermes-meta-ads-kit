@@ -12,7 +12,11 @@ metadata:
     user_invocable: true
     requires:
       commands: ["curl", "jq"]
-      env: ["FACEBOOK_ACCESS_TOKEN"]
+      env: []
+    optional_env: ["FACEBOOK_ACCESS_TOKEN"]
+prerequisites:
+  commands: ["curl", "jq"]
+  environment_variables: []
 ---
 
 # Ad Copy Generator
@@ -22,6 +26,26 @@ Write Meta ad copy that's matched to the actual image creative — not generic c
 Read `workspace/brand/` for project-local brand context if available.
 
 ---
+
+
+### Hermes Secret-Safety Note
+
+Some Meta Graph API examples in this skill/reference use Meta's documented `access_token` parameter. In Hermes runs, prefer bearer headers when executing commands so tokens do not appear in URLs, logs, browser history, or copied diagnostics:
+
+```bash
+curl -H "Authorization: Bearer $FACEBOOK_ACCESS_TOKEN" "https://graph.facebook.com/v22.0/me"
+```
+
+If a Meta endpoint truly requires `access_token` as a form field, pass it from an environment variable at execution time and never paste the token into the prompt, docs, or committed files.
+
+## Hermes Execution Notes
+
+This is primarily an instruction skill. Use Hermes vision tools for image analysis when an image is provided, and use terminal/curl only when account-performance data is needed and credentials are available.
+
+Do not put access tokens in Graph API URLs. Prefer `curl -H "Authorization: Bearer $FACEBOOK_ACCESS_TOKEN" ...` so tokens are not embedded in URLs or saved in shell history. If `FACEBOOK_ACCESS_TOKEN` is unavailable, proceed from user-provided brand/context data and state that account-performance lookup was skipped.
+
+---
+
 
 ## Brand Memory Integration
 

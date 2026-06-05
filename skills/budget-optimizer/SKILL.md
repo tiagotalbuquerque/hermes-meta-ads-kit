@@ -11,8 +11,11 @@ metadata:
     homepage: https://github.com/tiagotalbuquerque/hermes-meta-ads-kit
     user_invocable: true
     requires:
-      commands: ["social"]
+      commands: ["social", "jq"]
       env: []
+prerequisites:
+  commands: ["social", "jq"]
+  environment_variables: []
 ---
 
 # Budget Optimizer — Put Money Where It Works
@@ -20,6 +23,15 @@ metadata:
 Most ad accounts have the same problem: budget spread evenly across campaigns when performance isn't even close to even. This skill finds where your money works hardest and recommends shifts.
 
 ---
+
+## Hermes Execution Notes
+
+When loaded by Hermes, run `./run.sh efficiency`, `./run.sh recommend`, or `./run.sh pacing` from the repository root, or run `scripts/budget-optimizer.sh` by absolute path from the installed skill directory. Do not assume `./scripts/...` resolves unless your current working directory is this skill directory.
+
+This skill requires `social-cli` and `jq`. Budget changes are never performed by this skill directly; recommendations require explicit user approval before any separate mutating command.
+
+---
+
 
 ## Reports
 

@@ -13,6 +13,11 @@ if ! command -v social &>/dev/null; then
   exit 1
 fi
 
+if ! command -v jq &>/dev/null; then
+  echo "ERROR: jq not installed. Install jq before running JSON reports." >&2
+  exit 1
+fi
+
 MODE="${1:-fatigue-check}"
 shift 2>/dev/null || true
 ACCOUNT="${META_AD_ACCOUNT:-}"
@@ -28,6 +33,10 @@ done
 [[ -n "$ACCOUNT" && ! "$ACCOUNT" =~ ^act_ ]] && ACCOUNT="act_${ACCOUNT}"
 ACCOUNT_ARG=""
 [[ -n "$ACCOUNT" ]] && ACCOUNT_ARG="$ACCOUNT"
+
+clean_social_output() {
+  grep -v "^[/ _|\\]" | grep -v "token gymnastics" | grep -v "Chaos Craft" || true
+}
 
 case "$MODE" in
   fatigue-check|fatigue)
@@ -77,7 +86,7 @@ case "$MODE" in
     social --no-banner marketing insights $ACCOUNT_ARG \
       --preset last_7d --level ad --table \
       --fields "ad_name,spend,impressions,clicks,ctr,cpc,frequency" \
-      2>&1 | grep -v "^[/ _|\\]" | grep -v "token gymnastics" | grep -v "Chaos Craft"
+      2>&1 | clean_social_output
     ;;
 
   track-ad|track)
@@ -92,7 +101,7 @@ case "$MODE" in
       --preset last_14d --level ad --time-increment 1 --table \
       --fields "ad_name,date_start,impressions,clicks,ctr,cpc,frequency,spend" \
       --filtering "[{\"field\":\"ad.id\",\"operator\":\"EQUAL\",\"value\":\"$AD_ID\"}]" \
-      2>&1 | grep -v "^[/ _|\\]" | grep -v "token gymnastics" | grep -v "Chaos Craft"
+      2>&1 | clean_social_output
     ;;
 
   *)

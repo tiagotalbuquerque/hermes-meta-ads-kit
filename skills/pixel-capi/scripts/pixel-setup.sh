@@ -6,7 +6,7 @@
 #
 # Platforms: nextjs, shopify, wordpress, webflow, ghl, clickfunnels, custom
 #
-# Requires: META_TOKEN env var or ~/.social-cli/config.json with meta_access_token
+# Requires: META_TOKEN or FACEBOOK_ACCESS_TOKEN env var, or ~/.social-cli/config.json with meta_access_token
 
 set -euo pipefail
 
@@ -15,6 +15,10 @@ API_BASE="https://graph.facebook.com/v19.0"
 get_token() {
   if [[ -n "${META_TOKEN:-}" ]]; then
     echo "$META_TOKEN"
+    return
+  fi
+  if [[ -n "${FACEBOOK_ACCESS_TOKEN:-}" ]]; then
+    echo "$FACEBOOK_ACCESS_TOKEN"
     return
   fi
   local config="$HOME/.social-cli/config.json"

@@ -19,6 +19,11 @@ if ! command -v social &>/dev/null; then
   exit 1
 fi
 
+if ! command -v jq &>/dev/null; then
+  echo "ERROR: jq not installed. Install jq before running JSON reports." >&2
+  exit 1
+fi
+
 # Defaults
 MODE="${1:-daily-check}"
 shift 2>/dev/null || true
@@ -65,9 +70,14 @@ run_social() {
   social --no-banner "$@" --json 2>/dev/null
 }
 
+# Helper: remove social-cli banner/noise without failing when all lines are filtered
+clean_social_output() {
+  grep -v "^[/ _|\\]" | grep -v "token gymnastics" | grep -v "Chaos Craft" || true
+}
+
 # Helper: run social command with table output
 run_social_table() {
-  social --no-banner "$@" --table 2>&1 | grep -v "^[/ _|\\]" | grep -v "token gymnastics" | grep -v "Chaos Craft"
+  social --no-banner "$@" --table 2>&1 | clean_social_output
 }
 
 fmt_num() { printf "%'d" "${1:-0}" 2>/dev/null || echo "${1:-0}"; }
@@ -88,19 +98,19 @@ report_daily_check() {
   # Q1: What's my spend vs yesterday?
   echo "① SPEND: Am I on track?"
   echo "---"
-  social --no-banner marketing status $ACCOUNT_ARG 2>&1 | grep -v "^[/ _|\\]" | grep -v "token gymnastics" | grep -v "Chaos Craft" | grep -v "^$" || echo "  (Run 'social auth login' to connect)"
+  social --no-banner marketing status $ACCOUNT_ARG 2>&1 | clean_social_output | grep -v "^$" || echo "  (Run 'social auth login' to connect)"
   echo ""
 
   # Q2: Which campaigns are active and what's their status?
   echo "② CAMPAIGNS: What's running?"
   echo "---"
-  social --no-banner marketing campaigns $ACCOUNT_ARG --status ACTIVE --table 2>&1 | grep -v "^[/ _|\\]" | grep -v "token gymnastics" | grep -v "Chaos Craft" | head -20 || echo "  No active campaigns found"
+  social --no-banner marketing campaigns $ACCOUNT_ARG --status ACTIVE --table 2>&1 | clean_social_output | head -20 || echo "  No active campaigns found"
   echo ""
 
   # Q3: What are the insights for last 7 days?
   echo "③ PERFORMANCE: Last 7 days"
   echo "---"
-  social --no-banner marketing insights $ACCOUNT_ARG --preset last_7d --level campaign --table 2>&1 | grep -v "^[/ _|\\]" | grep -v "token gymnastics" | grep -v "Chaos Craft" | head -20 || echo "  No insights data"
+  social --no-banner marketing insights $ACCOUNT_ARG --preset last_7d --level campaign --table 2>&1 | clean_social_output | head -20 || echo "  No insights data"
   echo ""
 
   # Q4: Ad-level performance (find bleeders and winners)
@@ -133,7 +143,7 @@ report_daily_check() {
   echo "⑤ CREATIVE: Any fatigue signals?"
   echo "---"
   echo "  Check daily breakdown for CTR decline over time:"
-  social --no-banner marketing insights $ACCOUNT_ARG --preset last_7d --level ad --time-increment 1 --table --fields "ad_name,impressions,ctr,cpc,frequency" 2>&1 | grep -v "^[/ _|\\]" | grep -v "token gymnastics" | grep -v "Chaos Craft" | head -15 || echo "  No daily breakdown available"
+  social --no-banner marketing insights $ACCOUNT_ARG --preset last_7d --level ad --time-increment 1 --table --fields "ad_name,impressions,ctr,cpc,frequency" 2>&1 | clean_social_output | head -15 || echo "  No daily breakdown available"
   echo ""
   echo "  ↑ Watch for: CTR dropping day-over-day, frequency >3, CPC rising"
 }

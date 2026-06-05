@@ -1166,3 +1166,8 @@ GET https://graph.facebook.com/v19.0/me
 | 10 | Permission denied | Pixel not accessible with this token |
 | 100 | Invalid parameter | Check event payload structure |
 | 368 | Blocked | Account may be restricted |
+
+
+## Hermes Secret-Safety Note
+
+Prefer `Authorization: Bearer $FACEBOOK_ACCESS_TOKEN` over `access_token=` URLs when executing Graph API commands from Hermes.

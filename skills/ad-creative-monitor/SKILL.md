@@ -11,8 +11,11 @@ metadata:
     homepage: https://github.com/tiagotalbuquerque/hermes-meta-ads-kit
     user_invocable: true
     requires:
-      commands: ["social"]
+      commands: ["social", "jq"]
       env: []
+prerequisites:
+  commands: ["social", "jq"]
+  environment_variables: []
 ---
 
 # Ad Creative Monitor — Catch Fatigue Early
@@ -22,6 +25,15 @@ Creative fatigue is the silent killer of ad accounts. CTR drops 0.1% per day, fr
 This skill watches for those signals daily and flags creatives that need rotation.
 
 ---
+
+## Hermes Execution Notes
+
+When loaded by Hermes, run `./run.sh fatigue` from the repository root, or run `scripts/creative-monitor.sh` by absolute path from the installed skill directory. Do not assume `./scripts/...` resolves unless your current working directory is this skill directory.
+
+This skill requires `social-cli` and `jq`. It is read-only and should produce recommendations, not pause ads.
+
+---
+
 
 ## How It Works
 

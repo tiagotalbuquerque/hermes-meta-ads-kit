@@ -11,8 +11,11 @@ metadata:
     homepage: https://github.com/tiagotalbuquerque/hermes-meta-ads-kit
     user_invocable: true
     requires:
-      commands: ["social"]
+      commands: ["social", "jq"]
       env: []
+prerequisites:
+  commands: ["social", "jq"]
+  environment_variables: []
 ---
 
 # Meta Ads — Your AI Ad Manager
@@ -28,6 +31,19 @@ Read `workspace/brand/` for project-local brand context if available.
 Use Hermes output style: lead with key metrics, cite the script/data source, and separate recommendations from actions requiring approval.
 
 ---
+
+## Hermes Execution Notes
+
+When this skill is loaded by Hermes, do **not** assume the current working directory is the skill directory. Prefer this order:
+
+1. If working inside a checkout of `hermes-meta-ads-kit`, run the repo wrapper: `./run.sh <command>`.
+2. If the skill is installed into Hermes, run scripts by absolute path from the loaded skill directory, for example `$HERMES_HOME/skills/marketing/meta-ads/scripts/meta-ads.sh daily-check`.
+3. If neither path is known, locate the script with `search_files(target="files", pattern="meta-ads.sh")` before running it.
+
+This skill's scripts require `social-cli`; JSON parsing paths also require `jq`. Reporting is read-only. Mutating `social marketing pause/resume/set-budget` commands require explicit user approval.
+
+---
+
 
 ## Brand Memory Integration
 
