@@ -37,9 +37,9 @@ mk_meta_cli_command_for() {
     campaigns_list) META_CMD=(meta ads campaign list) ;;
     adsets_list) META_CMD=(meta ads adset list) ;;
     ads_list) META_CMD=(meta ads ad list) ;;
-    insights_campaign_last_7d) META_CMD=(meta ads insights get --date-preset last_7d --fields spend,impressions,clicks,ctr,cpc,reach) ;;
-    insights_ad_last_7d) META_CMD=(meta ads insights get --date-preset last_7d --fields spend,impressions,clicks,ctr,cpc,reach,frequency) ;;
-    insights_ad_daily_last_7d) META_CMD=(meta ads insights get --date-preset last_7d --time-increment daily --fields spend,impressions,clicks,ctr,cpc,reach,frequency) ;;
+    insights_campaign_last_7d) META_CMD=(meta ads insights get --level campaign --date-preset last_7d --fields campaign_id,campaign_name,spend,impressions,clicks,ctr,cpc,reach) ;;
+    insights_ad_last_7d) META_CMD=(meta ads insights get --level ad --date-preset last_7d --fields ad_id,ad_name,campaign_name,spend,impressions,clicks,ctr,cpc,reach,frequency) ;;
+    insights_ad_daily_last_7d) META_CMD=(meta ads insights get --level ad --date-preset last_7d --time-increment daily --fields ad_id,ad_name,campaign_name,spend,impressions,clicks,ctr,cpc,reach,frequency) ;;
     *)
       echo "ERROR: unknown operation mapping: $op" >&2
       return 1
@@ -175,6 +175,38 @@ mk_meta_cli_read_json() {
   export AD_ACCOUNT_ID="$account"
   local cmd=("${META_BASE_CMD[@]}" --output "$(mk_output_format)" --no-input "${META_CMD[@]:1}")
   json="$("${cmd[@]}" 2>/dev/null)"
+
+  # The official CLI returns Graph's {data:[...]} envelope. The reports use
+  # the kit's stable aggregate shape, so normalize once at this boundary.
+  case "$op" in
+    campaigns_list|adsets_list|ads_list)
+      json="$(jq 'if type == "array" then {data: .} else . end' <<<"$json")"
+      ;;
+    insights_campaign_last_7d)
+      json="$(jq --arg account "$account" --arg target "${META_KIT_DAILY_BUDGET_TARGET:-0}" '
+        .data as $rows | {
+          account_summary: {
+            account_id: $account,
+            currency: "BRL",
+            spend_7d: ([$rows[].spend // "0" | tonumber] | add // 0 | tostring),
+            spend_today: "0",
+            daily_budget_target: $target,
+            active_campaigns: ($rows | length),
+            active_ads: 0
+          },
+          campaign_insights: $rows,
+          today_campaign_spend: []
+        }
+      ' <<<"$json")"
+      ;;
+    insights_ad_last_7d)
+      json="$(jq '{ad_insights: .data}' <<<"$json")"
+      ;;
+    insights_ad_daily_last_7d)
+      json="$(jq '{ad_daily: .data}' <<<"$json")"
+      ;;
+  esac
+
   mk_snapshot_json "$label" "$json" >/dev/null
   printf '%s\n' "$json"
 }
