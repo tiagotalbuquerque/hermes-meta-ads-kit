@@ -88,8 +88,10 @@ report_campaigns() {
 }
 
 report_overview() {
-  local insights
+  local insights today
   insights="$(mk_meta_cli_read_json insights_campaign_last_7d overview)"
+  today="$(mk_meta_cli_read_json insights_campaign_today overview-today)"
+  insights="$(jq --argjson today "$today" '.account_summary.spend_today = $today.account_summary.spend_today | .today_campaign_spend = $today.today_campaign_spend' <<<"$insights")"
 
   echo "Overview"
   echo "========"
