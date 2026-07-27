@@ -211,7 +211,7 @@ report_recommend() {
 
 report_pacing() {
   local insights
-  insights="$(mk_meta_cli_read_json insights_campaign_last_7d pacing)"
+  insights="$(mk_meta_cli_read_json insights_campaign_today pacing)"
 
   echo "Pacing"
   echo "======"

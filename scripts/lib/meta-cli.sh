@@ -38,6 +38,7 @@ mk_meta_cli_command_for() {
     adsets_list) META_CMD=(meta ads adset list) ;;
     ads_list) META_CMD=(meta ads ad list) ;;
     insights_campaign_last_7d) META_CMD=(meta ads insights get --level campaign --date-preset last_7d --fields campaign_id,campaign_name,spend,impressions,clicks,ctr,cpc,reach) ;;
+    insights_campaign_today) META_CMD=(meta ads insights get --level campaign --date-preset today --fields campaign_id,campaign_name,spend) ;;
     insights_ad_last_7d) META_CMD=(meta ads insights get --level ad --date-preset last_7d --fields ad_id,ad_name,campaign_name,spend,impressions,clicks,ctr,cpc,reach,frequency) ;;
     insights_ad_daily_last_7d) META_CMD=(meta ads insights get --level ad --date-preset last_7d --time-increment daily --fields ad_id,ad_name,campaign_name,spend,impressions,clicks,ctr,cpc,reach,frequency) ;;
     *)
@@ -150,7 +151,7 @@ mk_meta_cli_read_json() {
       campaigns_list) json="$(mk_fixture_json campaigns.list.json)" ;;
       adsets_list) json="$(mk_fixture_json adsets.list.json)" ;;
       ads_list) json="$(mk_fixture_json ads.list.json)" ;;
-      insights_campaign_last_7d|insights_ad_last_7d|insights_ad_daily_last_7d)
+      insights_campaign_last_7d|insights_campaign_today|insights_ad_last_7d|insights_ad_daily_last_7d)
         json="$(mk_fixture_json insights.last_7d.json)"
         ;;
       *)
@@ -180,7 +181,7 @@ mk_meta_cli_read_json() {
   # the kit's stable aggregate shape, so normalize once at this boundary.
   case "$op" in
     campaigns_list|adsets_list|ads_list)
-      json="$(jq 'if type == "array" then {data: .} else . end' <<<"$json")"
+      json="$(jq 'if type == "array" then {data: .} else . end | .data |= map(.status //= .effective_status)' <<<"$json")"
       ;;
     insights_campaign_last_7d)
       json="$(jq --arg account "$account" --arg target "${META_KIT_DAILY_BUDGET_TARGET:-0}" '
@@ -196,6 +197,19 @@ mk_meta_cli_read_json() {
           },
           campaign_insights: $rows,
           today_campaign_spend: []
+        }
+      ' <<<"$json")"
+      ;;
+    insights_campaign_today)
+      json="$(jq --arg account "$account" --arg target "${META_KIT_DAILY_BUDGET_TARGET:-0}" '
+        .data as $rows | {
+          account_summary: {
+            account_id: $account,
+            currency: "BRL",
+            spend_today: ([$rows[].spend // "0" | tonumber] | add // 0 | tostring),
+            daily_budget_target: $target
+          },
+          today_campaign_spend: ($rows | map({campaign_name, spend_today: (.spend // "0")}))
         }
       ' <<<"$json")"
       ;;

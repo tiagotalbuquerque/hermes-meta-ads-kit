@@ -38,6 +38,11 @@ I'm open-sourcing this because every founder running Meta ads deserves a copilot
 
 ---
 
+## Agent support
+
+- **OpenClaw:** existing upstream setup remains unchanged; see [SETUP.md](SETUP.md).
+- **Hermes Agent (optional):** install the same skills with `./scripts/install-hermes.sh`; see [HERMES.md](HERMES.md).
+
 ## Quick Start
 
 ```bash

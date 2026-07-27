@@ -1,186 +1,66 @@
-# HERMES.md — Hermes Agent Integration
+# Running with Hermes Agent
 
-This repository is a Hermes Agent adaptation of `TheMattBerman/meta-ads-kit`.
+Hermes runs Meta Ads Kit directly from the local repository. Nothing from this project needs to be copied into a Hermes profile for the scheduled pipeline.
 
-It is intentionally a **multi-skill pack**: each subdirectory under `skills/` is a normal Hermes `SKILL.md` directory, with scripts/references preserved beside the skill.
-
-## What Changed From the Original
-
-- Replaced OpenClaw-specific metadata and docs with Hermes Agent conventions.
-- Added `hermes-pack.json` as a simple manifest for humans/tools.
-- Added `scripts/install-hermes-skills.sh` to install the full skill pack into the active Hermes profile.
-- Updated agent instructions in `AGENTS.md` for Hermes tool use, `/reset`, cron, gateway, and approval gates.
-- Expanded the docs for Hermes CLI usage, gateway delivery, and cron scheduling.
-
-## Prerequisites
+## Setup
 
 ```bash
-# Hermes Agent
-hermes --version
-
-# Meta API wrapper used by the report scripts
-npm install -g @vishalgojha/social-cli
-social auth login
-social marketing accounts
-social marketing set-default-account act_YOUR_ACCOUNT_ID
+git clone https://github.com/tiagotalbuquerque/hermes-meta-ads-kit.git
+cd hermes-meta-ads-kit
+cp .env.example .env
+chmod 600 .env
 ```
 
-Optional for upload/copy workflows:
+Set the production variables in `.env`:
+
+```dotenv
+META_KIT_MODE=live
+ACCESS_TOKEN=...
+AD_ACCOUNT_ID=act_...
+```
+
+Validate before scheduling:
 
 ```bash
-export FACEBOOK_ACCESS_TOKEN="..."
-export META_AD_ACCOUNT="act_123456789"
-```
-
-## Install the Skills Into Hermes
-
-From the repository root:
-
-```bash
-chmod +x scripts/install-hermes-skills.sh
-scripts/install-hermes-skills.sh
-```
-
-Default destination:
-
-```text
-${HERMES_HOME:-~/.hermes}/skills/marketing/<skill-name>/
-```
-
-Useful variants:
-
-```bash
-# Install into a different category
-scripts/install-hermes-skills.sh --category marketing
-
-# Replace existing copies deliberately
-scripts/install-hermes-skills.sh --force
-
-# Install into another Hermes profile/home
-HERMES_HOME=~/.hermes/profiles/ads/.hermes scripts/install-hermes-skills.sh
-```
-
-After installation, start a new Hermes session or run `/reset` in an existing one so the skill list refreshes.
-
-## Run With Hermes
-
-Load just the skills needed for a daily check:
-
-```bash
-hermes -s meta-ads -s ad-creative-monitor -s budget-optimizer
-```
-
-Load the full pack:
-
-```bash
-hermes \
-  -s meta-ads \
-  -s ad-creative-monitor \
-  -s budget-optimizer \
-  -s ad-copy-generator \
-  -s ad-upload \
-  -s pixel-capi
-```
-
-Then ask naturally:
-
-- `Daily ads check`
-- `Any bleeders I should pause?`
-- `Which ads should I scale?`
-- `Check for creative fatigue`
-- `Show performance by age and gender`
-- `Generate copy for this creative`
-- `Dry-run upload for these ads`
-
-## Run Scripts Directly
-
-The scripts still work outside Hermes for verification/debugging:
-
-```bash
+./run.sh doctor
 ./run.sh daily-check
-./run.sh bleeders --preset last_7d
-./run.sh winners --preset last_30d
-./run.sh fatigue
-./run.sh efficiency
-./run.sh recommend
 ```
 
-## Automate With Hermes Cron
+A production run is valid only when it reports `mode=live`, the expected account, real data, and no parser errors. A successful exit code alone is insufficient.
 
-Inside Hermes:
+## How Hermes initializes the project
+
+Set the Hermes session or cron job `workdir` to the absolute repository root. Hermes then:
+
+1. starts a fresh isolated agent session;
+2. injects the repository `AGENTS.md` as project context;
+3. runs terminal and file tools from the repository;
+4. follows `AGENTS.md` First Run, which reads `SOUL.md`, the README, and the local `skills/` directory;
+5. runs `./run.sh`, which loads `.env` from the repository root.
+
+This keeps identity, instructions, credentials, and output local to the project. It does not modify Hermes `SOUL.md`, memory, or profile.
+
+## Optional standalone skills
+
+You may separately copy the directories under `skills/` into a Hermes profile to make individual skills available in normal conversations. This is optional and does not replace or participate in the scheduled pipeline bootstrap above. Do not copy `.env`, `SOUL.md`, `IDENTITY.md`, or `AGENTS.md` into the profile.
+
+## Scheduled run
+
+Create the job from the Hermes profile that should own its schedule and history. The project provides its complete agent context through `workdir`.
 
 ```text
-Run my Meta ads daily check every morning at 8am and send me the summary.
+schedule: 0 12 * * *
+workdir: /absolute/path/to/hermes-meta-ads-kit
+skills: []
+prompt: Run ./run.sh daily-check. Require mode=live and the expected act_... account. Reject mock, empty, or parser-error output. Report real metrics only. Read-only: do not mutate campaigns, ads, ad sets, or budgets.
 ```
 
-Or via CLI:
+Leave `enabled_toolsets` unset unless you intentionally maintain a restrictive cron allowlist. Cron sessions do not inherit the current chat, so keep the expected account, live-data gate, and mutation boundary in the prompt.
 
-```bash
-hermes cron create "0 8 * * *"
-```
+## Removal
 
-Use a self-contained prompt such as:
+Remove the cron job through Hermes, then delete the local repository if no longer needed. Remove optional standalone skill copies separately if installed.
 
-```text
-Load/use the meta-ads, ad-creative-monitor, and budget-optimizer skills. In /path/to/hermes-meta-ads-kit, run ./run.sh daily-check using the configured Meta account. Summarize spend pacing, active campaigns, bleeders, winners, fatigue signals, and recommended next actions. Do not pause, resume, upload, or change budgets; only recommend actions for user approval.
-```
+## OpenClaw
 
-## Delivery Through Hermes Gateway
-
-Hermes can send scheduled summaries through any configured gateway platform (Telegram, Discord, Slack, WhatsApp, Signal, Matrix, email, etc.). Configure the gateway normally:
-
-```bash
-hermes gateway setup
-hermes gateway status
-```
-
-Then create the cron job from the target chat/thread or set the cron delivery target explicitly.
-
-## Safety Rules
-
-Read-only operations can run without approval:
-
-- Reports
-- Insights
-- Fatigue checks
-- Budget recommendations
-- Dry-run payload validation
-
-Spend/delivery-affecting operations require explicit approval:
-
-- Pause/resume ad, ad set, or campaign
-- Budget changes
-- Uploading/publishing live ads
-- Creating or updating live creatives
-
-## Troubleshooting
-
-| Symptom | Fix |
-|---|---|
-| Hermes cannot see the skills | Run `scripts/install-hermes-skills.sh`, then `/reset` or start a new session |
-| `social: command not found` | `npm install -g @vishalgojha/social-cli` |
-| No ad accounts | Confirm the Meta user has access, then run `social auth login` again |
-| No data for period | Try `--preset last_30d` or verify campaigns were active |
-| Upload/copy Graph API fails | Export `FACEBOOK_ACCESS_TOKEN` and `META_AD_ACCOUNT`; verify with `/me` and `/me/adaccounts` Graph calls |
-| Cron duplicates | Run `hermes cron list` before adding a new recurring briefing |
-
-## Repo Layout
-
-```text
-hermes-meta-ads-kit/
-├── AGENTS.md
-├── HERMES.md
-├── README.md
-├── SETUP.md
-├── SPEC.md
-├── hermes-pack.json
-├── scripts/install-hermes-skills.sh
-├── run.sh
-└── skills/
-    ├── meta-ads/
-    ├── ad-creative-monitor/
-    ├── budget-optimizer/
-    ├── ad-copy-generator/
-    ├── ad-upload/
-    └── pixel-capi/
-```
+The existing OpenClaw setup remains unchanged; see [SETUP.md](SETUP.md). The Hermes path is additive and does not alter OpenClaw files or behavior.
