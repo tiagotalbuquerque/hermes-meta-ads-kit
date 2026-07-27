@@ -1,86 +1,77 @@
-# Hermes Meta Ads Kit — Setup Guide
+# Meta Ads Copilot — Setup Guide
 
-Get the Hermes-powered Meta Ads copilot running in about 10 minutes.
-
----
-
-## Step 1: Verify Hermes Agent
-
-```bash
-hermes --version
-hermes doctor
-```
-
-If Hermes is not installed:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
-```
+Get the local Meta Ads operator running safely in mock mode first, then read-only mode.
 
 ---
 
-## Step 2: Install social-cli
+## Step 1: Install the official Meta Ads CLI
 
-`social-cli` is the open-source command-line engine that talks to the Meta Marketing API.
+Meta's official Ads CLI is published as the Python package `meta-ads`.
+
+Requirements:
+- Python 3.12+
+- `pip`
+- `uv` recommended
 
 ```bash
-npm install -g @vishalgojha/social-cli
+pip install meta-ads
+# or run without global install:
+uvx --python 3.12 --from meta-ads meta --help
 ```
 
-Verify it is installed:
+Verify:
 
 ```bash
-social --version
+meta --help
+meta ads --help
+meta ads campaign list --help
+meta ads insights get --help
 ```
 
 ---
 
-## Step 3: Authenticate With Meta
+## Step 2: Start in mock mode
 
 ```bash
-social auth login
+cp .env.example .env
+cp ad-config.example.json ad-config.json
+META_KIT_MODE=mock ./scripts/meta-kit.sh doctor
+META_KIT_MODE=mock ./run.sh daily-check
 ```
 
-This opens your browser to authorize with Meta. You need:
-
-- A Facebook account with access to the ad account
-- Permission to read ad insights
-- `ads_management` permission only if you want approved actions such as pause/resume/budget changes
-
-### Advanced: Using a Meta App
-
-If you have a Meta developer app:
-
-```bash
-social auth set-app --app-id YOUR_APP_ID --app-secret YOUR_APP_SECRET
-social auth login --scopes ads_read,ads_management,read_insights
-```
+Mock mode uses local fixtures only. It does not call Meta.
 
 ---
 
-## Step 4: Set Your Ad Account
+## Step 3: Configure official Ads CLI auth for read-only use
 
-List available ad accounts:
+Ads CLI authenticates with a Meta **admin system user access token**.
 
-```bash
-social marketing accounts
-```
-
-Set the default:
+Create a system user in Meta Business Suite, assign the needed assets, generate a token, then set:
 
 ```bash
-social marketing set-default-account act_YOUR_ACCOUNT_ID
+ACCESS_TOKEN=<SYSTEM_USER_ACCESS_TOKEN>
+AD_ACCOUNT_ID=act_YOUR_ACCOUNT_ID
+BUSINESS_ID=<OPTIONAL_BUSINESS_ID>
 ```
 
-Or set it via environment variable:
+Minimum read-only scopes for monitoring:
+- `ads_read`
+- `read_insights`
 
-```bash
-export META_AD_ACCOUNT=act_YOUR_ACCOUNT_ID
-```
+Additional scopes are needed only for management/catalog/page workflows:
+- `ads_management`
+- `business_management`
+- `pages_show_list`
+- `pages_read_engagement`
+- `pages_manage_ads`
+- `catalog_management`
+
+Never commit `.env`, `.env.*.local`, tokens, or secrets.
 
 ---
 
-## Step 5: Configure Benchmarks
+## Step 4: Configure benchmarks
 
 ```bash
 cp ad-config.example.json ad-config.json
@@ -104,96 +95,57 @@ Edit `ad-config.json` with your targets:
 }
 ```
 
-If you do not know your benchmarks yet, keep defaults and let Hermes report against them while you calibrate.
+---
+
+## Step 5: Run read-only reports
+
+After auth is configured:
+
+```bash
+META_KIT_MODE=read-only ./scripts/meta-kit.sh doctor
+META_KIT_MODE=read-only ./run.sh campaigns
+META_KIT_MODE=read-only ./run.sh overview --preset last_7d
+META_KIT_MODE=read-only ./run.sh daily-check
+```
+
+The adapter writes sanitized read-only snapshots under `local/outputs/read-only/`.
 
 ---
 
-## Step 6: Install the Hermes Skills
+## Mutations: approval-only
 
-This repository is a multi-skill pack. Install all included skills into the active Hermes profile:
+Mutating work is blocked by default.
 
-```bash
-chmod +x scripts/install-hermes-skills.sh
-scripts/install-hermes-skills.sh
-```
+Rules:
+- default mode is `mock`
+- read-only mode cannot mutate
+- live mutation requires `META_KIT_MODE=live-approved`
+- live mutation requires `META_KIT_APPROVAL_ID`
+- creates must be `PAUSED`
+- deletes remain unsupported in v1
+- every proposed mutation writes a dry-run artifact first
 
-Default destination:
-
-```text
-${HERMES_HOME:-~/.hermes}/skills/marketing/
-```
-
-If a previous copy exists and you deliberately want to replace it:
+Dry-run example:
 
 ```bash
-scripts/install-hermes-skills.sh --force
-```
-
-After installing, start a new Hermes session or use `/reset` in the current session.
-
----
-
-## Step 7: Test the Scripts Directly
-
-```bash
-chmod +x run.sh
-./run.sh daily-check
-```
-
-You should see the 5 Daily Questions with real ad data from the selected Meta account.
-
-Useful checks:
-
-```bash
-./run.sh bleeders --preset last_7d
-./run.sh winners --preset last_30d
-./run.sh fatigue
-./run.sh efficiency
+META_KIT_MODE=mock ./scripts/meta-kit.sh create-ad --payload examples/create-ad.json --dry-run
 ```
 
 ---
 
-## Step 8: Run With Hermes
-
-Core monitoring session:
+## Run With OpenClaw
 
 ```bash
-hermes -s meta-ads -s ad-creative-monitor -s budget-optimizer
+npm install -g openclaw
+cd meta-ads-kit
+openclaw start
 ```
 
-Full pack:
-
-```bash
-hermes -s meta-ads -s ad-creative-monitor -s budget-optimizer -s ad-copy-generator -s ad-upload -s pixel-capi
-```
-
-Now message Hermes naturally:
-
-- `Daily ads check`
-- `Any bleeders?`
-- `Which ads should I scale?`
-- `Check creative fatigue`
-- `Show me performance by age and gender`
-- `Generate copy for this creative`
-- `Dry-run upload for this ad`
-
----
-
-## Step 9: Automate Morning Briefings
-
-Check for existing jobs first to avoid duplicate daily briefings:
-
-```bash
-hermes cron list
-```
-
-Then create a job from Hermes:
-
-```text
-Run my Meta ads daily check every morning at 8am and send me the summary. Use the meta-ads, ad-creative-monitor, and budget-optimizer skills. Do not pause, resume, upload, or change budgets; only recommend actions for approval.
-```
-
-Hermes can deliver through the configured gateway platform if you create the job from a chat/channel or specify a delivery target.
+Ask naturally:
+- "How are my ads doing?"
+- "Any bleeders?"
+- "Daily check"
+- "Check for fatigue"
 
 ---
 
@@ -201,36 +153,15 @@ Hermes can deliver through the configured gateway platform if you create the job
 
 | Problem | Fix |
 |---------|-----|
-| `hermes: command not found` | Install Hermes Agent or ensure it is on PATH |
-| Hermes cannot see the new skills | Run `scripts/install-hermes-skills.sh`, then `/reset` or start a new session |
-| `social: command not found` | Run `npm install -g @vishalgojha/social-cli` |
-| Authentication fails | Run `social auth login` again and check browser permissions |
-| No ad accounts found | Ensure your Facebook user has ad account access |
-| No data returned | Check the selected date range and campaign activity |
-| Rate limited | Wait a few minutes and retry with fewer/wider queries |
-| Upload flow fails | Export `FACEBOOK_ACCESS_TOKEN` and `META_AD_ACCOUNT`; run Graph API verification calls |
+| `meta: command not found` | Install `meta-ads` or use `uvx --python 3.12 --from meta-ads meta ...` |
+| Python version error | Use Python 3.12+ |
+| `ACCESS_TOKEN` missing | Add a system user token to `.env` or environment |
+| `AD_ACCOUNT_ID` missing | Set `AD_ACCOUNT_ID=act_...` |
+| No data returned | Confirm campaigns ran during the selected date range |
+| Rate limited | Wait and retry; use narrower reports |
 
-### Check social-cli
+Check everything:
 
 ```bash
-social doctor
+./scripts/meta-kit.sh doctor
 ```
-
-### Check Hermes
-
-```bash
-hermes doctor
-hermes skills list
-```
-
----
-
-## Permissions Needed
-
-| Permission | Required For |
-|-----------|--------------|
-| `ads_read` | Reading campaign data and basic account objects |
-| `read_insights` | Performance metrics |
-| `ads_management` | Pausing/resuming ads, budget changes, uploads |
-
-`ads_read` + `read_insights` are enough for monitoring. Add `ads_management` only if you want Hermes to execute approved actions.

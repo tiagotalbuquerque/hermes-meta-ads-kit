@@ -1,0 +1,10 @@
+{
+  "data": [
+    {"id": "3303001", "adset_id": "2202001", "campaign_id": "1201001", "name": "Video Hook - Founder Story", "status": "ACTIVE"},
+    {"id": "3303002", "adset_id": "2202001", "campaign_id": "1201001", "name": "Static - Offer Stack", "status": "ACTIVE"},
+    {"id": "3303003", "adset_id": "2202002", "campaign_id": "1201001", "name": "Carousel - Pain Points", "status": "ACTIVE"},
+    {"id": "3303004", "adset_id": "2202003", "campaign_id": "1201002", "name": "UGC Retargeting - Testimonial", "status": "ACTIVE"},
+    {"id": "3303005", "adset_id": "2202003", "campaign_id": "1201002", "name": "Discount Reminder", "status": "ACTIVE"},
+    {"id": "3303006", "adset_id": "2202003", "campaign_id": "1201002", "name": "Old Creative - Legacy", "status": "PAUSED"}
+  ]
+}

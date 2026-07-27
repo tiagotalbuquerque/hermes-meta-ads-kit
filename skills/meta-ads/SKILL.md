@@ -1,49 +1,28 @@
 ---
 name: meta-ads
-description: "Meta Ads management and reporting — daily checks, campaign performance, creative fatigue, bleeders, winners. Wraps social-cli for Facebook/Instagram ads. The '5 Daily Questions' that replace Ads Manager."
-version: 1.0.0-hermes.1
-author: TheMattBerman + Hermes adaptation
-license: MIT
+description: "Meta Ads management and reporting — daily checks, campaign performance, creative fatigue, bleeders, winners. Uses a local adapter over Meta Ads CLI in mock/read-only/live-approved modes."
 metadata:
-  hermes:
+  openclaw:
     emoji: "📣"
-    tags: ["meta-ads", "facebook-ads", "instagram-ads", "reporting", "paid-media"]
-    homepage: https://github.com/tiagotalbuquerque/hermes-meta-ads-kit
-    user_invocable: true
+    user-invocable: true
     requires:
-      commands: ["social", "jq"]
+      tools: ["bash"]
       env: []
-prerequisites:
-  commands: ["social", "jq"]
-  environment_variables: []
 ---
 
 # Meta Ads — Your AI Ad Manager
 
-Stop clicking through Ads Manager. This skill wraps [social-cli](https://github.com/vishalgojha/social-CLI) to give you the five things that actually matter about your Meta campaigns — in plain text, every day.
+Stop clicking through Ads Manager. This skill uses `./run.sh` + `./scripts/meta-kit.sh` to give you the five things that actually matter about your Meta campaigns — in plain text, every day.
 
 The thesis: 90% of ad management is pattern recognition. Spend trending up or down. CTR declining (creative fatigue). CPA spiking (audience exhaustion). Winners emerging. Losers bleeding.
 
 This skill spots the patterns. You make the calls.
 
-Read `workspace/brand/` for project-local brand context if available.
+Read `workspace/brand/` per the _vibe-system protocol
 
-Use Hermes output style: lead with key metrics, cite the script/data source, and separate recommendations from actions requiring approval.
-
----
-
-## Hermes Execution Notes
-
-When this skill is loaded by Hermes, do **not** assume the current working directory is the skill directory. Prefer this order:
-
-1. If working inside a checkout of `hermes-meta-ads-kit`, run the repo wrapper: `./run.sh <command>`.
-2. If the skill is installed into Hermes, run scripts by absolute path from the loaded skill directory, for example `$HERMES_HOME/skills/marketing/meta-ads/scripts/meta-ads.sh daily-check`.
-3. If neither path is known, locate the script with `search_files(target="files", pattern="meta-ads.sh")` before running it.
-
-This skill's scripts require `social-cli`; JSON parsing paths also require `jq`. Reporting is read-only. Mutating `social marketing pause/resume/set-budget` commands require explicit user approval.
+Follow all output formatting rules from the _vibe-system output format
 
 ---
-
 
 ## Brand Memory Integration
 
@@ -67,40 +46,16 @@ This skill's scripts require `social-cli`; JSON parsing paths also require `jq`.
 
 ## Setup (One Time)
 
-### 1. Install social-cli
+### 1. Configure local adapter mode
 
 ```bash
-npm install -g @vishalgojha/social-cli
+cp .env.example .env
+META_KIT_MODE=mock ./scripts/meta-kit.sh doctor
 ```
 
-### 2. Create a Meta App (if you don't have one)
+### 2. Set account/token in `.env` for non-mock runs
 
-1. Go to [developers.facebook.com](https://developers.facebook.com) → My Apps → Create App
-2. Choose "Business" type
-3. Add "Marketing API" product
-4. Note your App ID and App Secret
-
-### 3. Authenticate
-
-```bash
-social auth login
-# Opens browser → approve → done
-```
-
-Or with app credentials:
-```bash
-social auth set-app --app-id YOUR_APP_ID --app-secret YOUR_APP_SECRET
-social auth login --scopes ads_read,ads_management,read_insights
-```
-
-### 4. Set default ad account
-
-```bash
-social marketing accounts          # Lists your ad accounts
-social marketing set-default-account act_123456
-```
-
-Or set env: `export META_AD_ACCOUNT=act_123456`
+Use official Ads CLI variables: `ACCESS_TOKEN`, `AD_ACCOUNT_ID`, and optionally `BUSINESS_ID`. The kit still accepts `META_AD_ACCOUNT` / `META_SYSTEM_USER_ACCESS_TOKEN` aliases for backwards compatibility. Keep secrets out of git.
 
 ---
 
@@ -122,7 +77,7 @@ Or: "Run the 5 questions on my ads"
 Or: "How are my Meta ads doing?"
 ```
 
-Script: `scripts/meta-ads.sh daily-check`
+Script: `./run.sh daily-check`
 
 ### Overview
 
@@ -132,7 +87,7 @@ Account-level summary with campaign breakdown.
 Tell me: "Meta ads overview for last 30 days"
 ```
 
-Script: `scripts/meta-ads.sh overview --preset last_30d`
+Script: `./run.sh overview --preset last_30d`
 
 ### Campaigns
 
@@ -142,7 +97,7 @@ List campaigns, optionally filtered by status.
 Tell me: "Show me active campaigns"
 ```
 
-Script: `scripts/meta-ads.sh campaigns --status ACTIVE`
+Script: `./run.sh campaigns --status ACTIVE`
 
 ### Top Creatives
 
@@ -152,7 +107,7 @@ Ad-level performance ranked by results.
 Tell me: "What are my best performing ads?"
 ```
 
-Script: `scripts/meta-ads.sh top-creatives --preset last_7d`
+Script: `./run.sh winners --preset last_7d`
 
 ### Bleeders 🩸
 
@@ -163,7 +118,7 @@ Tell me: "Any ads bleeding money?"
 Or: "Find underperforming ads"
 ```
 
-Script: `scripts/meta-ads.sh bleeders --preset last_7d`
+Script: `./run.sh bleeders --preset last_7d`
 
 ### Winners 🏆
 
@@ -174,7 +129,7 @@ Tell me: "Which ads should I scale?"
 Or: "Show me the winners"
 ```
 
-Script: `scripts/meta-ads.sh winners --preset last_7d`
+Script: `./run.sh winners --preset last_7d`
 
 ### Fatigue Check 😴
 
@@ -185,7 +140,7 @@ Tell me: "Any creative fatigue?"
 Or: "Check for ad fatigue"
 ```
 
-Script: `scripts/meta-ads.sh fatigue-check`
+Script: `./run.sh fatigue`
 
 ### Custom
 
@@ -195,7 +150,7 @@ Full control. Specify level, fields, breakdowns.
 Tell me: "Show me ad performance broken down by age and gender"
 ```
 
-Script: `scripts/meta-ads.sh custom --level ad --fields "ad_name,spend,ctr,cpc" --breakdowns "age,gender"`
+Script: `meta --output json --no-input ads insights get --breakdown age --breakdown gender --fields spend,impressions,ctr,cpc` once read-only CLI auth is configured.
 
 ---
 
@@ -211,24 +166,14 @@ Script: `scripts/meta-ads.sh custom --level ad --fields "ad_name,spend,ctr,cpc" 
 
 ## Actions (Use With Care)
 
-Beyond reporting, social-cli can take action. These are wrapped here for the "AI ad manager" workflow but require explicit approval.
+Beyond reporting, official Ads CLI can create/update/delete resources. In this kit, mutating actions are blocked unless they go through dry-run + explicit approval.
 
-### Pause a bleeder
+### Prepare an ad create dry run
 ```bash
-social marketing pause ad AD_ID
+META_KIT_MODE=mock ./scripts/meta-kit.sh create-ad --payload examples/create-ad.json --dry-run
 ```
 
-### Resume a winner
-```bash
-social marketing resume ad AD_ID
-```
-
-### Shift budget
-```bash
-social marketing set-budget adset ADSET_ID --daily-budget 5000  # in cents
-```
-
-**Safety:** All mutating actions are high-risk in social-cli and require confirmation. The skill should ALWAYS present findings and recommendations first, then ask for explicit approval before taking action.
+**Safety:** All mutating actions are high-risk and require confirmation. The skill should ALWAYS present findings and recommendations first, write a dry-run artifact for proposed changes, then ask for explicit approval before any live action.
 
 ---
 
@@ -248,9 +193,10 @@ This is the system from the newsletter. Here's how it works in practice:
 3. Ask follow-up questions if needed
 
 **The AI (on approval):**
-1. Pause confirmed bleeders
-2. Increase budget on confirmed winners
-3. Log decisions to learnings.md
+1. Generates exact dry-run artifacts for confirmed changes
+2. Requires `META_KIT_MODE=live-approved` + `META_KIT_APPROVAL_ID` before live mutation
+3. Keeps new creates PAUSED-only
+4. Logs decisions to learnings.md
 
 ---
 
@@ -259,9 +205,9 @@ This is the system from the newsletter. Here's how it works in practice:
 When the user asks about Meta ads, Facebook ads, Instagram ads, or campaign performance:
 
 1. Check `workspace/brand/stack.md` for stored ad account ID
-2. Check `META_AD_ACCOUNT` env var
-3. If neither, run `social marketing accounts` to list available accounts
-4. Run the appropriate report
+2. Check `AD_ACCOUNT_ID` / `META_AD_ACCOUNT` env vars
+3. If neither, run `./scripts/meta-kit.sh doctor`; after auth, `meta ads adaccount list` can list accounts
+4. Run the appropriate `./run.sh` report
 5. Interpret results in context of brand goals (from stack.md/learnings.md)
 6. For bleeders/winners, present clear recommendations with reasoning
 7. **Never take action without explicit user approval**

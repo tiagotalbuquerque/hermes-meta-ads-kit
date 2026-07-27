@@ -1,7 +1,11 @@
 .env
+.env.*.local
 ad-config.json
 workspace/
 memory/
 output/
+local/
+*.token
+*.secrets
 node_modules/
 .DS_Store

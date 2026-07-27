@@ -176,16 +176,17 @@ You need a Meta access token with `ads_management` and `ads_read` permissions. T
 2. Create system user, assign to pixel with "Analyze" permission
 3. Generate token with `ads_management` scope
 
-**Option B -- User token:**
+**Option B -- Ads CLI system user token:**
 ```bash
-social auth login
-# Then check: cat ~/.social-cli/config.json
+export ACCESS_TOKEN="your_system_user_token"
+export AD_ACCOUNT_ID="act_123456789"
+meta ads dataset list
 ```
 
-**Store token:**
+**Store token for CAPI scripts:**
 ```bash
 export META_TOKEN="your_token_here"
-# Or add to ~/.social-cli/config.json as "meta_access_token"
+# Keep it in .env / .env.*.local only; never commit it.
 ```
 
 ### Get Your Pixel ID

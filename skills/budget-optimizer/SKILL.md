@@ -1,21 +1,13 @@
 ---
 name: budget-optimizer
 description: "Analyze spend efficiency across campaigns and adsets. Recommends budget shifts from underperformers to winners."
-version: 1.0.0-hermes.1
-author: TheMattBerman + Hermes adaptation
-license: MIT
 metadata:
-  hermes:
+  openclaw:
     emoji: "💰"
-    tags: ["meta-ads", "budget", "paid-media", "optimization"]
-    homepage: https://github.com/tiagotalbuquerque/hermes-meta-ads-kit
-    user_invocable: true
+    user-invocable: true
     requires:
-      commands: ["social", "jq"]
+      tools: ["bash"]
       env: []
-prerequisites:
-  commands: ["social", "jq"]
-  environment_variables: []
 ---
 
 # Budget Optimizer — Put Money Where It Works
@@ -23,15 +15,6 @@ prerequisites:
 Most ad accounts have the same problem: budget spread evenly across campaigns when performance isn't even close to even. This skill finds where your money works hardest and recommends shifts.
 
 ---
-
-## Hermes Execution Notes
-
-When loaded by Hermes, run `./run.sh efficiency`, `./run.sh recommend`, or `./run.sh pacing` from the repository root, or run `scripts/budget-optimizer.sh` by absolute path from the installed skill directory. Do not assume `./scripts/...` resolves unless your current working directory is this skill directory.
-
-This skill requires `social-cli` and `jq`. Budget changes are never performed by this skill directly; recommendations require explicit user approval before any separate mutating command.
-
----
-
 
 ## Reports
 
@@ -65,13 +48,10 @@ Or: "Check spend pacing"
 
 ```bash
 # Efficiency ranking
-./scripts/budget-optimizer.sh efficiency [--account act_123] [--preset last_7d]
-
-# Budget recommendations
-./scripts/budget-optimizer.sh recommend [--account act_123]
+./run.sh efficiency [--account act_123] [--preset last_7d]
 
 # Spend pacing check
-./scripts/budget-optimizer.sh pacing [--account act_123]
+./run.sh pacing [--account act_123]
 ```
 
 ---

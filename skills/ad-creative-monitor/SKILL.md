@@ -1,21 +1,13 @@
 ---
 name: ad-creative-monitor
 description: "Track creative performance over time and detect fatigue before it kills ROAS. Monitors CTR decay, frequency creep, and CPC inflation at the ad level."
-version: 1.0.0-hermes.1
-author: TheMattBerman + Hermes adaptation
-license: MIT
 metadata:
-  hermes:
+  openclaw:
     emoji: "😴"
-    tags: ["meta-ads", "creative-fatigue", "paid-media", "reporting"]
-    homepage: https://github.com/tiagotalbuquerque/hermes-meta-ads-kit
-    user_invocable: true
+    user-invocable: true
     requires:
-      commands: ["social", "jq"]
+      tools: ["bash"]
       env: []
-prerequisites:
-  commands: ["social", "jq"]
-  environment_variables: []
 ---
 
 # Ad Creative Monitor — Catch Fatigue Early
@@ -25,15 +17,6 @@ Creative fatigue is the silent killer of ad accounts. CTR drops 0.1% per day, fr
 This skill watches for those signals daily and flags creatives that need rotation.
 
 ---
-
-## Hermes Execution Notes
-
-When loaded by Hermes, run `./run.sh fatigue` from the repository root, or run `scripts/creative-monitor.sh` by absolute path from the installed skill directory. Do not assume `./scripts/...` resolves unless your current working directory is this skill directory.
-
-This skill requires `social-cli` and `jq`. It is read-only and should produce recommendations, not pause ads.
-
----
-
 
 ## How It Works
 
@@ -49,14 +32,8 @@ This skill requires `social-cli` and `jq`. It is read-only and should produce re
 ### The Check
 
 ```bash
-# Run fatigue check
-./scripts/creative-monitor.sh fatigue-check
-
-# Track specific ad over time
-./scripts/creative-monitor.sh track-ad AD_ID
-
-# Weekly creative health report
-./scripts/creative-monitor.sh weekly-report
+# Run fatigue check (mock/read-only via local adapter)
+./run.sh fatigue
 ```
 
 ---
@@ -91,7 +68,7 @@ Or: "Which ads need fresh creative?"
 
 ## Invocation
 
-1. Pull ad-level insights with daily time increment (`--time-increment 1`)
+1. Pull ad-level insights with daily time increment via `./scripts/meta-kit.sh`
 2. Calculate day-over-day CTR, CPC, and frequency trends
 3. Flag any ad showing fatigue signals
 4. Compare against benchmarks in `ad-config.json`

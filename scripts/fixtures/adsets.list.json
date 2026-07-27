@@ -1,0 +1,7 @@
+{
+  "data": [
+    {"id": "2202001", "campaign_id": "1201001", "name": "US 25-54 Broad", "status": "ACTIVE", "daily_budget": "90"},
+    {"id": "2202002", "campaign_id": "1201001", "name": "US 18-24 Broad", "status": "ACTIVE", "daily_budget": "60"},
+    {"id": "2202003", "campaign_id": "1201002", "name": "Site Visitors 30d", "status": "ACTIVE", "daily_budget": "80"}
+  ]
+}

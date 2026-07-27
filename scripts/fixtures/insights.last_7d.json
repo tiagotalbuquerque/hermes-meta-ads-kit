@@ -1,0 +1,47 @@
+{
+  "account_summary": {
+    "account_id": "act_123456789",
+    "currency": "USD",
+    "spend_7d": "1640.25",
+    "spend_today": "241.10",
+    "daily_budget_target": "230.00",
+    "active_campaigns": 2,
+    "active_ads": 5
+  },
+  "campaign_insights": [
+    {"campaign_id": "1201001", "campaign_name": "Prospecting - Broad", "spend": "1120.40", "impressions": "149920", "clicks": "2148", "ctr": "1.43", "cpc": "0.52"},
+    {"campaign_id": "1201002", "campaign_name": "Retargeting - 30d", "spend": "519.85", "impressions": "44120", "clicks": "1048", "ctr": "2.37", "cpc": "0.50"}
+  ],
+  "ad_insights": [
+    {"ad_id": "3303001", "ad_name": "Video Hook - Founder Story", "campaign_name": "Prospecting - Broad", "spend": "330.22", "impressions": "41000", "clicks": "760", "ctr": "1.85", "cpc": "0.43", "frequency": "2.7"},
+    {"ad_id": "3303002", "ad_name": "Static - Offer Stack", "campaign_name": "Prospecting - Broad", "spend": "289.10", "impressions": "37200", "clicks": "402", "ctr": "1.08", "cpc": "0.72", "frequency": "3.1"},
+    {"ad_id": "3303003", "ad_name": "Carousel - Pain Points", "campaign_name": "Prospecting - Broad", "spend": "501.08", "impressions": "62400", "clicks": "525", "ctr": "0.84", "cpc": "0.95", "frequency": "3.9"},
+    {"ad_id": "3303004", "ad_name": "UGC Retargeting - Testimonial", "campaign_name": "Retargeting - 30d", "spend": "301.20", "impressions": "18110", "clicks": "540", "ctr": "2.98", "cpc": "0.56", "frequency": "2.2"},
+    {"ad_id": "3303005", "ad_name": "Discount Reminder", "campaign_name": "Retargeting - 30d", "spend": "218.65", "impressions": "26010", "clicks": "362", "ctr": "1.39", "cpc": "0.60", "frequency": "4.1"}
+  ],
+  "ad_daily": [
+    {"ad_id": "3303001", "ad_name": "Video Hook - Founder Story", "date_start": "2026-04-24", "ctr": "2.01", "cpc": "0.41", "frequency": "2.2"},
+    {"ad_id": "3303001", "ad_name": "Video Hook - Founder Story", "date_start": "2026-04-27", "ctr": "1.92", "cpc": "0.42", "frequency": "2.4"},
+    {"ad_id": "3303001", "ad_name": "Video Hook - Founder Story", "date_start": "2026-04-30", "ctr": "1.85", "cpc": "0.43", "frequency": "2.7"},
+
+    {"ad_id": "3303002", "ad_name": "Static - Offer Stack", "date_start": "2026-04-24", "ctr": "1.32", "cpc": "0.65", "frequency": "2.6"},
+    {"ad_id": "3303002", "ad_name": "Static - Offer Stack", "date_start": "2026-04-27", "ctr": "1.18", "cpc": "0.69", "frequency": "2.8"},
+    {"ad_id": "3303002", "ad_name": "Static - Offer Stack", "date_start": "2026-04-30", "ctr": "1.08", "cpc": "0.72", "frequency": "3.1"},
+
+    {"ad_id": "3303003", "ad_name": "Carousel - Pain Points", "date_start": "2026-04-24", "ctr": "1.22", "cpc": "0.77", "frequency": "3.2"},
+    {"ad_id": "3303003", "ad_name": "Carousel - Pain Points", "date_start": "2026-04-27", "ctr": "0.97", "cpc": "0.88", "frequency": "3.5"},
+    {"ad_id": "3303003", "ad_name": "Carousel - Pain Points", "date_start": "2026-04-30", "ctr": "0.84", "cpc": "0.95", "frequency": "3.9"},
+
+    {"ad_id": "3303004", "ad_name": "UGC Retargeting - Testimonial", "date_start": "2026-04-24", "ctr": "2.85", "cpc": "0.59", "frequency": "1.9"},
+    {"ad_id": "3303004", "ad_name": "UGC Retargeting - Testimonial", "date_start": "2026-04-27", "ctr": "2.94", "cpc": "0.57", "frequency": "2.1"},
+    {"ad_id": "3303004", "ad_name": "UGC Retargeting - Testimonial", "date_start": "2026-04-30", "ctr": "2.98", "cpc": "0.56", "frequency": "2.2"},
+
+    {"ad_id": "3303005", "ad_name": "Discount Reminder", "date_start": "2026-04-24", "ctr": "1.73", "cpc": "0.55", "frequency": "3.6"},
+    {"ad_id": "3303005", "ad_name": "Discount Reminder", "date_start": "2026-04-27", "ctr": "1.54", "cpc": "0.58", "frequency": "3.8"},
+    {"ad_id": "3303005", "ad_name": "Discount Reminder", "date_start": "2026-04-30", "ctr": "1.39", "cpc": "0.60", "frequency": "4.1"}
+  ],
+  "today_campaign_spend": [
+    {"campaign_id": "1201001", "campaign_name": "Prospecting - Broad", "spend_today": "162.30"},
+    {"campaign_id": "1201002", "campaign_name": "Retargeting - 30d", "spend_today": "78.80"}
+  ]
+}

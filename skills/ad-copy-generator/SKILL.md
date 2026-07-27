@@ -1,51 +1,24 @@
 ---
 name: ad-copy-generator
-description: "Generate high-converting Meta ad copy matched to specific image creatives. Analyzes visuals, writes copy that reinforces the image, cross-references account performance data, and outputs asset_feed_spec-ready variants."
-version: 1.0.0-hermes.1
-author: TheMattBerman + Hermes adaptation
-license: MIT
+description: "Generate high-converting Meta ad copy matched to specific image creatives. Analyzes visuals, writes copy that reinforces the image, cross-references account performance data through the official Ads CLI adapter when available, and outputs payload-ready variants."
 metadata:
-  hermes:
+  openclaw:
     emoji: "✍️"
-    tags: ["meta-ads", "copywriting", "creative", "asset-feed-spec"]
-    homepage: https://github.com/tiagotalbuquerque/hermes-meta-ads-kit
-    user_invocable: true
+    user-invocable: true
+    homepage: https://github.com/TheMattBerman/meta-ads-kit
     requires:
-      commands: ["curl", "jq"]
-      env: []
-    optional_env: ["FACEBOOK_ACCESS_TOKEN"]
-prerequisites:
-  commands: ["curl", "jq"]
-  environment_variables: []
+      env:
+        - ACCESS_TOKEN
+        - AD_ACCOUNT_ID
 ---
 
 # Ad Copy Generator
 
 Write Meta ad copy that's matched to the actual image creative — not generic copy pasted across every ad. Each image gets copy that reinforces its specific message, written in the brand's voice, informed by what's already working in the account.
 
-Read `workspace/brand/` for project-local brand context if available.
+Read `workspace/brand/` per the _vibe-system protocol if available.
 
 ---
-
-
-### Hermes Secret-Safety Note
-
-Some Meta Graph API examples in this skill/reference use Meta's documented `access_token` parameter. In Hermes runs, prefer bearer headers when executing commands so tokens do not appear in URLs, logs, browser history, or copied diagnostics:
-
-```bash
-curl -H "Authorization: Bearer $FACEBOOK_ACCESS_TOKEN" "https://graph.facebook.com/v22.0/me"
-```
-
-If a Meta endpoint truly requires `access_token` as a form field, pass it from an environment variable at execution time and never paste the token into the prompt, docs, or committed files.
-
-## Hermes Execution Notes
-
-This is primarily an instruction skill. Use Hermes vision tools for image analysis when an image is provided, and use terminal/curl only when account-performance data is needed and credentials are available.
-
-Do not put access tokens in Graph API URLs. Prefer `curl -H "Authorization: Bearer $FACEBOOK_ACCESS_TOKEN" ...` so tokens are not embedded in URLs or saved in shell history. If `FACEBOOK_ACCESS_TOKEN` is unavailable, proceed from user-provided brand/context data and state that account-performance lookup was skipped.
-
----
-
 
 ## Brand Memory Integration
 
@@ -79,22 +52,22 @@ Before writing, check for existing copy:
 Before writing a single word, look at the account. What copy is converting?
 
 ```bash
-# Top performers by CTR — last 30 days
-curl -s "https://graph.facebook.com/v22.0/ACT_ID/insights?\
-level=ad&fields=ad_name,impressions,clicks,ctr,cpc,cost_per_action_type\
-&date_preset=last_30d&sort=ctr_descending&limit=20\
-&access_token=$FACEBOOK_ACCESS_TOKEN"
+# Top performers by CTR — last 30 days through official Ads CLI
+meta --output json --no-input ads insights get \
+  --date-preset last_30d \
+  --fields spend,impressions,clicks,ctr,cpc,reach \
+  --sort ctr_descending \
+  --limit 20
 ```
 
-Then pull copy from winners:
+For creative details, prefer official CLI resources where supported:
 
 ```bash
-# Get creative ID from the ad
-curl -s "https://graph.facebook.com/v22.0/AD_ID?fields=creative{id}&access_token=$FACEBOOK_ACCESS_TOKEN"
-
-# Get the actual copy
-curl -s "https://graph.facebook.com/v22.0/CREATIVE_ID?fields=asset_feed_spec&access_token=$FACEBOOK_ACCESS_TOKEN"
+meta --output json --no-input ads ad get AD_ID
+meta --output json --no-input ads creative get CREATIVE_ID
 ```
+
+If official CLI does not expose a needed creative field yet, use direct Graph API only as an explicit fallback.
 
 **Extract patterns:**
 - Headline length and structure (questions? numbers? commands?)
@@ -107,14 +80,14 @@ Show the user what you found: "Your top 3 ads all open with a specific number an
 
 ### Step 2: Load Brand Context
 
-Read the client's `AGENTS.md`, `HERMES.md`, brand profile, or ask inline:
+Read the client's CLAUDE.md, brand profile, or ask inline:
 
 | Need | Where | Fallback |
 |------|-------|----------|
-| ICP | `audience.md`, `AGENTS.md`, or `HERMES.md` | Ask: "Who's this for?" |
+| ICP | `audience.md` or CLAUDE.md | Ask: "Who's this for?" |
 | Voice | `voice-profile.md` | Ask: "Any words to avoid? Tone preference?" |
 | Pain points | `audience.md` | Extract from top-performing copy |
-| Key stats | Brand brief / AGENTS.md / HERMES.md | Ask: "What proof points can I use?" |
+| Key stats | Brand brief / CLAUDE.md | Ask: "What proof points can I use?" |
 | Forbidden words | `voice-profile.md` | Default ban list (see below) |
 
 **Default forbidden words** (always banned unless brand explicitly uses them):

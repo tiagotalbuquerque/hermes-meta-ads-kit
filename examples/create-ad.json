@@ -1,0 +1,13 @@
+{
+  "name": "Example PAUSED Ad",
+  "adset_id": "ADSET_ID",
+  "creative": {
+    "name": "Example Creative",
+    "page_id": "PAGE_ID",
+    "image": "./examples/example-image.png",
+    "headline": "Example headline",
+    "body": "Example body copy for dry-run validation only.",
+    "cta": "LEARN_MORE"
+  },
+  "status": "PAUSED"
+}

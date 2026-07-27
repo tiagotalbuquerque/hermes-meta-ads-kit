@@ -1,19 +1,20 @@
-# Hermes Meta Ads Kit — Full Spec
+# Meta Ads Copilot — Full Spec
 
-**Status:** Hermes adaptation v1.0
-**Base project:** [`TheMattBerman/meta-ads-kit`](https://github.com/TheMattBerman/meta-ads-kit)
-**Framework:** [Hermes Agent](https://github.com/NousResearch/hermes-agent)
+**Created:** Feb 23, 2026
+**Updated:** Apr 30, 2026
+**Status:** local official-CLI adapter in progress
+**Owner:** @themattberman
 
 ---
 
 ## Overview
 
-A Hermes Agent-powered Meta Ads manager that replaces daily Ads Manager sessions with AI-generated briefings and recommendations.
+An OpenClaw-powered Meta Ads manager that replaces daily Ads Manager sessions with AI-generated briefings and recommendations.
 
-**The promise:** authenticate a Meta ad account → ask Hermes for a daily briefing → get bleeders, winners, fatigue alerts, budget recommendations, copy ideas, upload dry-runs, and Pixel/CAPI diagnostics → approve any spend-affecting actions explicitly.
+**The Promise:**
+Configure official Meta Ads CLI access → run daily briefings with bleeders, winners, pacing, and fatigue alerts → review dry-run recommendations → approve any spend-impacting action explicitly.
 
-**Target users:**
-
+**Target Users:**
 - Founders running their own Meta ads
 - Small marketing teams without a dedicated media buyer
 - Agency operators managing multiple accounts
@@ -24,193 +25,222 @@ A Hermes Agent-powered Meta Ads manager that replaces daily Ads Manager sessions
 ## System Architecture
 
 ```text
-┌────────────────────────────────────────────────────────────────────┐
-│                   HERMES META ADS KIT                              │
-│                                                                    │
-│  Hermes Agent                                                      │
-│  ├─ skills loader: meta-ads, creative monitor, budget optimizer     │
-│  ├─ terminal/file/vision tools for scripts, docs, and creative QA   │
-│  ├─ cron for daily briefings                                       │
-│  ├─ gateway for Telegram/Discord/Slack/etc. delivery               │
-│  └─ memory/session_search/skills for durable learning              │
-│                                                                    │
-│           ▼                                                        │
-│  Repository scripts + skill instructions                           │
-│           ▼                                                        │
-│  social-cli + direct Graph API calls where needed                  │
-│           ▼                                                        │
-│  Meta Marketing API                                                │
-└────────────────────────────────────────────────────────────────────┘
+OpenClaw skills
+   ↓
+run.sh
+   ↓
+scripts/meta-kit.sh              # local dispatcher/report layer
+   ↓
+scripts/lib/config.sh            # env loading and account selection
+scripts/lib/meta-cli.sh          # official CLI wrapper + snapshots
+scripts/lib/safety.sh            # approval, dry-run, PAUSED-only guards
+scripts/lib/mock.sh              # fixture-backed mock mode
+   ↓
+Official Meta Ads CLI (`meta`, package `meta-ads`)
+   ↓
+Meta Marketing API
 ```
+
+The adapter layer keeps OpenClaw skills stable while Meta's CLI syntax stays centralized in one mapping file.
+
+---
+
+## Official Meta Ads CLI baseline
+
+Official docs path:
+`https://developers.facebook.com/documentation/ads-commerce/ads-ai-connectors/ads-cli/ads-cli-overview`
+
+Key facts:
+- Package: `meta-ads` on PyPI
+- Binary: `meta`
+- Python: 3.12+
+- Auth: Meta admin system user access token
+- Official env vars: `ACCESS_TOKEN`, `AD_ACCOUNT_ID`, optional `BUSINESS_ID`
+- Command pattern: `meta ads <resource> <action> [options]`
+- Global flags go before `ads`, e.g. `meta --output json --no-input ads campaign list`
+- Resource names are singular: `campaign`, `adset`, `ad`, `creative`, `adaccount`, `page`, `insights`, `dataset`, `catalog`, `product-feed`, `product-item`, `product-set`
 
 ---
 
 ## Skills
 
 ### Skill 1: `meta-ads`
-
-**Purpose:** daily reporting and ad management recommendations.
+**Purpose:** Daily reporting and ad-management recommendations.
 
 Reports:
-
 - Daily check / 5 Daily Questions
 - Account overview
 - Campaign listing
-- Top creatives
-- Bleeders
 - Winners
+- Bleeders
 - Fatigue check
-- Custom reports with breakdowns
-
-Actions, requiring approval:
-
-- Pause/resume ad, ad set, or campaign
-- Adjust budget
+- Efficiency and pacing reads
 
 ### Skill 2: `ad-creative-monitor`
-
-**Purpose:** track creative health over time.
+**Purpose:** Track creative health over time.
 
 Capabilities:
-
-- Day-over-day CTR tracking
+- CTR trend monitoring
 - Frequency creep detection
 - CPC inflation alerts
-- Creative lifespan estimation
-- Rotation recommendations
+- Creative rotation recommendations
 
 ### Skill 3: `budget-optimizer`
-
-**Purpose:** spend efficiency analysis.
+**Purpose:** Spend efficiency analysis.
 
 Capabilities:
-
-- Campaign/ad set efficiency ranking
+- Campaign efficiency ranking
 - Budget shift recommendations
 - Spend pacing checks
-- ROI comparison across campaigns where conversion values exist
+- Recommendations only unless explicitly approved
 
 ### Skill 4: `ad-copy-generator`
-
-**Purpose:** generate ad copy matched to specific image creatives.
+**Purpose:** Generate ad copy matched to specific image creatives.
 
 Capabilities:
-
-- Analyze image creative via Hermes vision tools when available
-- Cross-reference account performance data for winning copy patterns
-- Generate 3-5 headline variants and 3-5 body variants
-- Output `asset_feed_spec`-ready copy
-- Apply brand voice from `workspace/brand/voice-profile.md`
-- Rotate psychological levers across variants
+- Analyze image creative
+- Cross-reference winning copy patterns when read-only data is available
+- Generate headline/body variants
+- Output payload candidates for `ad-upload` dry runs
 
 ### Skill 5: `ad-upload`
-
-**Purpose:** push reviewed ads to Meta via Graph API without Ads Manager.
+**Purpose:** Prepare upload/create payloads for Meta.
 
 Capabilities:
-
-- Validate copy and image payloads
-- Upload images to Meta ad account and return image hashes
-- Build `asset_feed_spec` creatives
-- Create ads in existing ad sets
-- Support dry-run mode before API mutation
-- Log creative/ad IDs locally
+- Build creative/ad payload candidates
+- Validate payload posture
+- Use official CLI-first where supported
+- Create only as `PAUSED`, only after explicit approval
 
 ### Skill 6: `pixel-capi`
-
-**Purpose:** audit and improve Meta Pixel + Conversions API setup.
+**Purpose:** Audit Meta Pixel + Conversions API setup.
 
 Capabilities:
-
-- Pixel/CAPI setup audit
-- Server-side event tests
-- Event Match Quality review
-- Platform guidance for Next.js, Shopify, WordPress, Webflow, GHL, ClickFunnels
+- Dataset/pixel inventory via official CLI where supported
+- CAPI testing remains separate and approval-gated because it can send events to Meta
 
 ---
 
 ## Data Flow
 
-### Morning Briefing (Automated)
+### Morning Briefing
+1. Cron or user triggers `./run.sh daily-check`.
+2. `run.sh` calls `scripts/meta-kit.sh`.
+3. Adapter loads config and mode.
+4. In `mock` mode, fixtures are used.
+5. In `read-only` mode, the adapter calls official Ads CLI and saves snapshots.
+6. Reports identify pacing, active campaigns, trends, winners, bleeders, and fatigue.
+7. Agent presents recommendations and asks before any action.
 
-1. Hermes cron triggers a self-contained prompt.
-2. Hermes loads relevant skills.
-3. Hermes runs `./run.sh daily-check` in the repository.
-4. Scripts pull insights via `social-cli`.
-5. Hermes analyzes spend pacing, active campaigns, 7-day trends, bleeders, winners, and fatigue signals.
-6. Hermes delivers the summary through the configured channel.
-7. Hermes waits for user approval before any action that affects spend/delivery.
-
-### On-Demand (Interactive)
-
-1. User asks naturally (`how are my ads?`, `any bleeders?`, etc.).
-2. Hermes selects relevant skills/scripts.
-3. Hermes runs read-only reports or dry-runs automatically.
-4. Hermes interprets results against `ad-config.json` and `workspace/brand/` context.
-5. Hermes presents findings with evidence and recommended next actions.
-6. If action is requested, Hermes confirms exact scope before execution.
+### On-Demand
+1. User asks a question.
+2. Agent selects the matching report command.
+3. Adapter pulls mock/read-only data.
+4. Agent interprets against `ad-config.json` and brand memory.
+5. If spend-impacting action is useful, agent creates a dry-run plan and waits for approval.
 
 ---
 
-## Benchmarks & Thresholds
+## Modes
 
-Default thresholds are configurable in `ad-config.json`:
-
-| Metric | Default | Purpose |
-|--------|---------|---------|
-| Bleeder CTR | < 1.0% | Flag underperforming ads |
-| Max frequency | > 3.5 | Detect creative fatigue |
-| Fatigue CTR drop | > 20% over 3 days | Early fatigue warning |
-| Spend pace alert | ±15% of planned pace | Over/underspend warning |
-| Target CPA | $25.00 | Campaign efficiency target |
-| Target ROAS | 3.0x | Return on ad spend target |
+| Mode | Purpose | External calls | Mutations |
+|---|---|---:|---:|
+| `mock` | Local development/demo | No | No |
+| `read-only` | Real reporting | Yes, read-only | No |
+| `live-approved` | Explicitly approved mutation session | Yes | Approval-gated |
 
 ---
 
 ## Safety Model
 
-### Read-Only by Default
+### Read-only by default
+Reporting can run in `mock` or `read-only`. Live mutations are never implicit.
 
-Reporting, analysis, copy drafts, audits, and dry-run validations can run automatically.
+### Approval required
+Any action that affects spend requires explicit user confirmation:
+- create/update/delete resources
+- pause/resume/status changes
+- budget changes
+- any command using `--force`
 
-### Actions Require Approval
+### Dry-run artifacts
+Every proposed mutation writes a JSON artifact under `local/dry-runs/` containing:
+- timestamp
+- account ID
+- mode
+- exact command preview
+- payload path
+- risk note
+- approval requirement
+- rollback note
 
-Any action that affects spend or delivery requires explicit user confirmation:
+### PAUSED-only creation
+New campaigns/ad sets/ads/creatives must be created as `PAUSED` unless a later reviewed version intentionally changes this. Deletes remain unsupported in v1.
 
-- Pausing/resuming ads, ad sets, or campaigns
-- Budget changes
-- Uploading/publishing live ads
-- Creating/updating live creatives
-
-### Audit Trail
-
-Every approved action should be logged to `workspace/brand/learnings.md` or `memory/YYYY-MM-DD.md` with:
-
-- Timestamp
-- What changed
-- Why it changed
-- Evidence used
-- Who approved it
-
----
-
-## Hermes-Specific Capabilities
-
-- **Skills:** reusable procedural knowledge, installed from `skills/*/SKILL.md`.
-- **Cron:** scheduled daily/weekly briefings.
-- **Gateway:** delivery and approval flow through messaging platforms.
-- **Vision:** creative analysis for image-matched copy.
-- **Memory/session search:** durable account learnings and past decision recall, used carefully.
-- **Profiles:** separate skill/config homes for agencies or multiple operators.
+### Secrets
+Ignored by git:
+- `.env`
+- `.env.*.local`
+- `local/`
+- `*.token`
+- `*.secrets`
 
 ---
 
-## Roadmap
+## Benchmarks & Thresholds
 
-- [ ] Multi-account agency mode with account selector and per-account benchmark files
-- [ ] Better structured JSON output for all reports
-- [ ] Automated A/B test detection and analysis
-- [ ] Creative performance dashboard generated from report history
-- [ ] More robust upload dry-run validator
-- [ ] Hermes cron templates and gateway approval message templates
-- [ ] Google Ads support when a stable CLI/API abstraction is available
+Default thresholds in `ad-config.json`:
+
+| Metric | Default | Purpose |
+|--------|---------|---------|
+| Bleeder CTR | < 1.0% | Flag underperforming ads |
+| Max frequency | > 3.5 | Creative fatigue signal |
+| Fatigue CTR drop | > 20% over 3 days | Early fatigue warning |
+| Spend pace alert | ±15% of daily budget | Over/underspend warning |
+| Target CPA | $25.00 | Campaign efficiency target |
+| Target ROAS | 3.0x | Return on ad spend target |
+
+---
+
+## Verification
+
+Local/static:
+
+```bash
+bash -n run.sh scripts/*.sh scripts/lib/*.sh
+```
+
+Mock reports:
+
+```bash
+META_KIT_MODE=mock ./run.sh daily-check
+META_KIT_MODE=mock ./run.sh overview --preset last_7d
+META_KIT_MODE=mock ./run.sh campaigns
+META_KIT_MODE=mock ./run.sh bleeders
+META_KIT_MODE=mock ./run.sh winners
+META_KIT_MODE=mock ./run.sh fatigue
+META_KIT_MODE=mock ./run.sh efficiency
+META_KIT_MODE=mock ./run.sh pacing
+META_KIT_MODE=mock ./scripts/meta-kit.sh doctor
+```
+
+Official CLI help, no credentials required:
+
+```bash
+uvx --python 3.12 --from meta-ads meta --help
+uvx --python 3.12 --from meta-ads meta ads --help
+uvx --python 3.12 --from meta-ads meta ads campaign list --help
+uvx --python 3.12 --from meta-ads meta ads insights get --help
+```
+
+---
+
+## Future Roadmap
+
+- [ ] Real read-only validation against one approved account
+- [ ] Official CLI-backed creative/ad upload dry-run payloads
+- [ ] Multi-account agency mode with per-client env files
+- [ ] Weekly report artifacts
+- [ ] Creative performance dashboards
+- [ ] Automated A/B test analysis
+- [ ] Google Ads adapter

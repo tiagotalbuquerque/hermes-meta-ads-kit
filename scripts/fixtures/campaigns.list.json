@@ -1,0 +1,7 @@
+{
+  "data": [
+    {"id": "1201001", "name": "Prospecting - Broad", "status": "ACTIVE", "objective": "SALES", "daily_budget": "150"},
+    {"id": "1201002", "name": "Retargeting - 30d", "status": "ACTIVE", "objective": "SALES", "daily_budget": "80"},
+    {"id": "1201003", "name": "UGC Test Cell", "status": "PAUSED", "objective": "TRAFFIC", "daily_budget": "40"}
+  ]
+}

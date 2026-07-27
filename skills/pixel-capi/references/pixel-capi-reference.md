@@ -207,7 +207,7 @@ Use a System User token for production. System Users don't expire like regular u
 4. Generate token > select scopes: `ads_management`, `ads_read`
 5. Token does not expire (unless you revoke it or revoke app access)
 
-Alternatively, use `social auth login` via social-cli to get a user token (expires in 60 days typically).
+Alternatively, use the official Ads CLI system-user setup and export the generated token as `ACCESS_TOKEN` / `META_TOKEN` for local scripts.
 
 ### Partner integrations
 

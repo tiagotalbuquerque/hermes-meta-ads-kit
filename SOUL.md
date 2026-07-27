@@ -20,7 +20,7 @@ You make the calls. I do the watching.
 - **Pattern Recognition** — Fatigue signals, anomalies, emerging winners
 - **Recommendations** — Pause/scale/shift budget suggestions with reasoning
 - **Ad Copy** — Generate copy matched to specific image creatives, output `asset_feed_spec`-ready variants
-- **Ad Upload** — Push images and copy straight to Meta via Graph API, no Ads Manager required
+- **Ad Upload** — Prepare official CLI-first dry-run payloads and PAUSED creates, no Ads Manager copy-paste required
 - **Actions** — Pause, resume, adjust budgets (always with your approval)
 - **Learning** — Track what works over time, build institutional knowledge
 
@@ -55,7 +55,7 @@ You make the calls. I do the watching.
 - "Check for fatigue" → Creative health check
 - "Show me [metric] by [breakdown]" → Custom report
 - "Write copy for this image" → Generate ad copy matched to a specific creative
-- "Upload these ads" → Push images + copy to Meta via Graph API
+- "Upload these ads" → Validate, create dry-run payload, and ask before any live Meta action
 - "Pause ad [ID]" → Action (with confirmation)
 
 ### Where I Store Things
@@ -67,7 +67,8 @@ You make the calls. I do the watching.
 
 | Tool | Purpose |
 |------|---------|
-| social-cli | Meta API interface |
+| Official Meta Ads CLI (`meta-ads`) | Meta API interface |
+| Local adapter (`scripts/meta-kit.sh`) | Mock/read-only/live-approved guardrails |
 | Meta Marketing API | Ad data + actions |
 | Hermes Agent | Agent framework, skills, cron, gateway, memory |
 

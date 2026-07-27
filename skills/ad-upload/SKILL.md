@@ -1,53 +1,26 @@
 ---
 name: ad-upload
-description: "Push ad copy and images to Meta via Graph API — no Ads Manager required. Uploads images, builds asset_feed_spec creatives, and creates or refreshes ads in existing ad sets. Downstream of ad-copy-generator."
-version: 1.0.0-hermes.1
-author: TheMattBerman + Hermes adaptation
-license: MIT
+description: "Prepare and upload Meta ad copy/images with official Ads CLI-first workflows where supported. Builds payloads, enforces dry-run/PAUSED-only guardrails, and creates or refreshes ads only after approval. Downstream of ad-copy-generator."
 metadata:
-  hermes:
+  openclaw:
     emoji: "🚀"
-    tags: ["meta-ads", "ad-upload", "graph-api", "asset-feed-spec"]
-    homepage: https://github.com/tiagotalbuquerque/hermes-meta-ads-kit
-    user_invocable: true
+    user-invocable: true
+    homepage: https://github.com/TheMattBerman/meta-ads-kit
     requires:
-      commands: ["curl", "jq"]
-      env: []
-    optional_env: ["FACEBOOK_ACCESS_TOKEN", "META_AD_ACCOUNT"]
-prerequisites:
-  commands: ["curl", "jq"]
-  environment_variables: []
+      env:
+        - ACCESS_TOKEN
+        - AD_ACCOUNT_ID
 ---
 
 # Ad Upload
 
-Take the copy and images from `ad-copy-generator` and push them straight to Meta. No copy-paste into Ads Manager. No manual creative setup. Just: generate, review, upload.
+Take the copy and images from `ad-copy-generator`, validate them locally, generate a dry-run payload, and only then prepare an official Ads CLI-backed upload/create flow. No copy-paste into Ads Manager. No live change without approval.
 
-This skill handles the full upload chain: image → hash → creative (with asset_feed_spec) → ad.
+This skill handles the guarded chain: validate → dry-run artifact → creative/ad command preview → approved PAUSED create.
 
-Read `workspace/brand/` for project-local brand context if available.
-
----
-
-
-### Hermes Secret-Safety Note
-
-Some Meta Graph API examples in this skill/reference use Meta's documented `access_token` parameter. In Hermes runs, prefer bearer headers when executing commands so tokens do not appear in URLs, logs, browser history, or copied diagnostics:
-
-```bash
-curl -H "Authorization: Bearer $FACEBOOK_ACCESS_TOKEN" "https://graph.facebook.com/v22.0/me"
-```
-
-If a Meta endpoint truly requires `access_token` as a form field, pass it from an environment variable at execution time and never paste the token into the prompt, docs, or committed files.
-
-## Hermes Execution Notes
-
-This skill can mutate live Meta accounts. In Hermes, treat every non-dry-run upload/create/update as a spend- or delivery-affecting action that requires explicit user approval immediately before execution.
-
-Do not put access tokens in Graph API URLs. Prefer `curl -H "Authorization: Bearer $FACEBOOK_ACCESS_TOKEN" ...`. Always dry-run/validate payloads before a live call.
+Read `workspace/brand/` per the _vibe-system protocol if available.
 
 ---
-
 
 ## Brand Memory Integration
 
@@ -70,25 +43,19 @@ Do not put access tokens in Graph API URLs. Prefer `curl -H "Authorization: Bear
 
 ## Setup
 
-### Token
+### Official Ads CLI auth
 
 ```bash
-# Get your Facebook access token
-TOKEN=$(jq -r '.profiles.default.tokens.facebook' ~/.social-cli/config.json)
-export FACEBOOK_ACCESS_TOKEN=$TOKEN
+# System user token + ad account for official Ads CLI
+export ACCESS_TOKEN="your_system_user_token"
+export AD_ACCOUNT_ID="act_123456789"
 
-# Verify it works
-curl -s "https://graph.facebook.com/v22.0/me?access_token=$FACEBOOK_ACCESS_TOKEN" | jq .
+# Verify CLI/auth posture
+./scripts/meta-kit.sh doctor
+meta ads adaccount list
 ```
 
-### Ad Account
-
-```bash
-# List ad accounts you have access to
-curl -s "https://graph.facebook.com/v22.0/me/adaccounts?fields=id,name&access_token=$FACEBOOK_ACCESS_TOKEN" | jq '.data[]'
-
-export META_AD_ACCOUNT="act_123456789"
-```
+Use direct Graph API only as a fallback for fields/features not yet exposed by official Ads CLI.
 
 Store in `workspace/brand/stack.md` so you don't set these every time:
 ```
@@ -105,11 +72,11 @@ Every ad goes through four steps:
 ```
 1. Validate copy + image
        |
-2. Upload image → get hash
+2. Write dry-run artifact with exact command/payload preview
        |
-3. Create creative with asset_feed_spec
+3. Create/upload creative via official CLI where supported
        |
-4. Create ad (or update existing)
+4. Create PAUSED ad only after explicit approval
 ```
 
 ---
@@ -177,7 +144,7 @@ Dry-run output shows:
 ### Single Image Upload
 
 ```bash
-TOKEN="$FACEBOOK_ACCESS_TOKEN"
+TOKEN="$ACCESS_TOKEN"
 ACCOUNT="$META_AD_ACCOUNT"  # e.g. act_123456789
 IMAGE_PATH="/path/to/image.jpg"
 IMAGE_NAME="summer-sale-hero.jpg"
@@ -247,7 +214,7 @@ This is Meta's Degrees of Freedom format. You provide multiple headlines, bodies
 
 ```bash
 ACCOUNT="$META_AD_ACCOUNT"
-TOKEN="$FACEBOOK_ACCESS_TOKEN"
+TOKEN="$ACCESS_TOKEN"
 PAGE_ID="YOUR_FACEBOOK_PAGE_ID"
 IMAGE_HASH="a1b2c3d4..."  # from Step 2
 PIXEL_ID="YOUR_PIXEL_ID"  # optional but recommended
@@ -339,7 +306,7 @@ curl -s \
 
 ```bash
 ACCOUNT="$META_AD_ACCOUNT"
-TOKEN="$FACEBOOK_ACCESS_TOKEN"
+TOKEN="$ACCESS_TOKEN"
 ADSET_ID="23847000000001"  # existing ad set ID
 CREATIVE_ID="23847293847293847"  # from Step 3
 
@@ -508,7 +475,7 @@ Review at: https://www.facebook.com/adsmanager/manage/ads
 
 | Error Code | Meaning | Fix |
 |------------|---------|-----|
-| `190` | Token expired or invalid | Re-auth: `social auth login` |
+| `190` | Token expired or invalid | Regenerate system user token and update `ACCESS_TOKEN` |
 | `200` | Permission missing | Add `ads_management` scope to token |
 | `294` | Managing ads over rate limit | Back off 60s, retry |
 | `100` | Invalid parameter | Check field names and values |
@@ -521,13 +488,13 @@ Review at: https://www.facebook.com/adsmanager/manage/ads
 ```bash
 # Check token validity
 curl -s "https://graph.facebook.com/v22.0/debug_token?\
-input_token=$FACEBOOK_ACCESS_TOKEN\
-&access_token=$FACEBOOK_ACCESS_TOKEN" | jq '.data | {valid, expires_at, scopes}'
+input_token=$ACCESS_TOKEN\
+&access_token=$ACCESS_TOKEN" | jq '.data | {valid, expires_at, scopes}'
 
 # If expired, re-auth
-social auth login
+# Generate a system user token in Meta Business Suite
 # Then re-export
-export FACEBOOK_ACCESS_TOKEN=$(jq -r '.profiles.default.tokens.facebook' ~/.social-cli/config.json)
+export ACCESS_TOKEN="your_system_user_token"
 ```
 
 ### Rate Limits (Error 294)
@@ -558,7 +525,7 @@ upload_with_retry() {
 
 Token needs `ads_management` scope:
 ```bash
-social auth login --scopes "ads_read,ads_management,pages_read_engagement"
+Generate a system user token with `ads_read`, `ads_management`, and page scopes as needed
 ```
 
 ### Image Rejected
@@ -673,7 +640,7 @@ This skill reads from the same path. Zero copy-paste.
 - **Uploading duplicate images** — Check `workspace/brand/assets.md` for existing hashes first
 - **One-size copy across all placements** — asset_feed_spec exists so Meta can optimize per placement; give it options (3+ bodies, 3+ titles)
 - **Using WebP images** — Meta accepts them sometimes but rejects them in specific placements; stick to JPG/PNG
-- **Hard-coding token in scripts** — Always read from `~/.social-cli/config.json` or env var; never commit tokens
+- **Hard-coding token in scripts** — Always read from `ACCESS_TOKEN` / `.env.*.local`; never commit tokens
 - **Skipping the page ID** — Creative will fail without a valid Facebook Page ID in `object_story_spec`
 - **Not saving upload responses** — If you don't save the creative ID and ad ID, you can't update or monitor later
 - **Creating new ad for copy refresh** — Update the creative on the existing ad to preserve metric history and delivery algorithm learning
