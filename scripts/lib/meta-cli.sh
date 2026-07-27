@@ -37,10 +37,10 @@ mk_meta_cli_command_for() {
     campaigns_list) META_CMD=(meta ads campaign list) ;;
     adsets_list) META_CMD=(meta ads adset list) ;;
     ads_list) META_CMD=(meta ads ad list) ;;
-    insights_campaign_last_7d) META_CMD=(meta ads insights get --level campaign --date-preset last_7d --fields campaign_id,campaign_name,spend,impressions,clicks,ctr,cpc,reach) ;;
-    insights_campaign_today) META_CMD=(meta ads insights get --level campaign --date-preset today --fields campaign_id,campaign_name,spend) ;;
-    insights_ad_last_7d) META_CMD=(meta ads insights get --level ad --date-preset last_7d --fields ad_id,ad_name,campaign_name,spend,impressions,clicks,ctr,cpc,reach,frequency) ;;
-    insights_ad_daily_last_7d) META_CMD=(meta ads insights get --level ad --date-preset last_7d --time-increment daily --fields ad_id,ad_name,campaign_name,spend,impressions,clicks,ctr,cpc,reach,frequency) ;;
+    insights_campaign_last_7d) META_CMD=(meta ads insights get --date-preset last_7d --fields spend,impressions,clicks,ctr,cpc,reach) ;;
+    insights_campaign_today) META_CMD=(meta ads insights get --date-preset today --fields spend) ;;
+    insights_ad_last_7d) META_CMD=(meta ads insights get --date-preset last_7d --fields spend,impressions,clicks,ctr,cpc,reach,frequency) ;;
+    insights_ad_daily_last_7d) META_CMD=(meta ads insights get --date-preset last_7d --time-increment daily --fields spend,impressions,clicks,ctr,cpc,reach,frequency) ;;
     *)
       echo "ERROR: unknown operation mapping: $op" >&2
       return 1
@@ -175,7 +175,26 @@ mk_meta_cli_read_json() {
 
   export AD_ACCOUNT_ID="$account"
   local cmd=("${META_BASE_CMD[@]}" --output "$(mk_output_format)" --no-input "${META_CMD[@]:1}")
-  json="$("${cmd[@]}" 2>/dev/null)"
+  if [[ "$op" == insights_campaign_* ]]; then
+    local objects id name row rows='[]'
+    objects="$("${META_BASE_CMD[@]}" --output "$(mk_output_format)" --no-input ads campaign list)" || return 1
+    while IFS=$'\t' read -r id name; do
+      row="$("${cmd[@]}" --campaign-id "$id")" || return 1
+      rows="$(jq --arg id "$id" --arg name "$name" --argjson next "$row" '. + ($next.data | map(. + {campaign_id: $id, campaign_name: $name}))' <<<"$rows")"
+    done < <(jq -r '.[] | [.id, .name] | @tsv' <<<"$objects")
+    json="$(jq -n --argjson data "$rows" '{data: $data}')"
+  elif [[ "$op" == insights_ad_* ]]; then
+    local objects id name campaign_name row rows='[]'
+    objects="$("${META_BASE_CMD[@]}" --output "$(mk_output_format)" --no-input ads ad list)" || return 1
+    while IFS=$'\t' read -r id name campaign_name; do
+      row="$("${cmd[@]}" --ad-id "$id")" || return 1
+      rows="$(jq --arg id "$id" --arg name "$name" --arg campaign "$campaign_name" --argjson next "$row" '. + ($next.data | map(. + {ad_id: $id, ad_name: $name, campaign_name: $campaign}))' <<<"$rows")"
+    done < <(jq -r '.[] | [.id, .name, (.campaign.name // "")] | @tsv' <<<"$objects")
+    json="$(jq -n --argjson data "$rows" '{data: $data}')"
+  elif ! json="$("${cmd[@]}")"; then
+    echo "ERROR: official Meta Ads CLI failed for operation '$op'." >&2
+    return 1
+  fi
 
   # The official CLI returns Graph's {data:[...]} envelope. The reports use
   # the kit's stable aggregate shape, so normalize once at this boundary.
@@ -214,10 +233,10 @@ mk_meta_cli_read_json() {
       ' <<<"$json")"
       ;;
     insights_ad_last_7d)
-      json="$(jq '{ad_insights: .data}' <<<"$json")"
+      json="$(jq '{ad_insights: (.data | map(.spend //= "0" | .impressions //= "0" | .clicks //= "0" | .ctr //= "0" | .cpc //= "0" | .reach //= "0" | .frequency //= "0"))}' <<<"$json")"
       ;;
     insights_ad_daily_last_7d)
-      json="$(jq '{ad_daily: .data}' <<<"$json")"
+      json="$(jq '{ad_daily: (.data | map(.spend //= "0" | .impressions //= "0" | .clicks //= "0" | .ctr //= "0" | .cpc //= "0" | .reach //= "0" | .frequency //= "0"))}' <<<"$json")"
       ;;
   esac
 
